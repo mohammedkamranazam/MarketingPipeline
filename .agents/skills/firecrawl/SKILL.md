@@ -1,150 +1,221 @@
 ---
 name: firecrawl
 description: |
-  Search, scrape, and interact with the web via the Firecrawl CLI. Use this skill whenever the user wants to search the web, find articles, research a topic, look something up online, scrape a webpage, grab content from a URL, get data from a website, crawl documentation, download a site, or interact with pages that need clicks or logins. Also use when they say "fetch this page", "pull the content from", "get the page at https://", or reference external websites. This provides real-time web search with full page content and interact capabilities — beyond what Claude can do natively with built-in tools. Do NOT trigger for local file operations, git commands, deployments, or code editing tasks.
-allowed-tools:
-  - Bash(firecrawl *)
-  - Bash(npx firecrawl *)
+  Firecrawl gives AI agents and apps fast, reliable web context with
+  strong search, scraping, and interaction tools. One install command
+  sets up both live CLI tools and app-integration skills. Route the
+  reader to the right usage path after install.
 ---
 
-# Firecrawl CLI
+# Firecrawl
 
-Search, scrape, and interact with the web. Returns clean markdown optimized for LLM context windows.
+Firecrawl helps agents search first, scrape clean content, and interact
+with live pages when plain extraction is not enough.
 
-Run `firecrawl --help` or `firecrawl <command> --help` for full option details.
+## Install
 
-If the task is to integrate Firecrawl into an application, add `FIRECRAWL_API_KEY` to a project, or choose endpoint usage in product code, use the `firecrawl-build` skills. They are already installed alongside this CLI skill when you run `firecrawl init`.
+One command installs everything — the Firecrawl CLI for live web work
+**and** the build skills for integrating Firecrawl into application
+code. It also opens browser auth so the human can sign in or create an
+account.
 
-## Prerequisites
-
-Must be installed and authenticated. Check with `firecrawl --status`.
-
-```
-  🔥 firecrawl cli v1.8.0
-
-  ● Authenticated via FIRECRAWL_API_KEY
-  Concurrency: 0/100 jobs (parallel scrape limit)
-  Credits: 500,000 remaining
+```bash
+npx -y firecrawl-cli@latest init --all --browser
 ```
 
-- **Concurrency**: Max parallel jobs. Run parallel operations up to this limit.
-- **Credits**: Remaining API credits. Each operation consumes credits.
+This gives you:
 
-If not ready, see [rules/install.md](rules/install.md). For output handling guidelines, see [rules/security.md](rules/security.md).
+- **CLI tools** — `firecrawl search`, `firecrawl scrape`, `firecrawl interact`, `firecrawl ask`, `firecrawl docs-search`, and more
+- **CLI skills** — `firecrawl/cli`, `firecrawl-search`, `firecrawl-scrape`, `firecrawl-interact`, `firecrawl-crawl`, `firecrawl-map`, `firecrawl-ask`, `firecrawl-docs-search`
+- **Build skills** — `firecrawl-build`, `firecrawl-build-onboarding`, `firecrawl-build-scrape`, `firecrawl-build-search`, `firecrawl-build-interact`, `firecrawl-build-crawl`, `firecrawl-build-map`
+- **Browser auth** — walks the human through sign-in or account creation
 
-Before doing real work, verify the setup with one small request:
+Before doing real work, verify the install:
 
 ```bash
 mkdir -p .firecrawl
+firecrawl --status
 firecrawl scrape "https://firecrawl.dev" -o .firecrawl/install-check.md
 ```
 
-```bash
-firecrawl search "query" --scrape --limit 3
+## Choose Your Path
+
+Both paths use the same install above. The difference is what you do
+next.
+
+- **Need web data during this session** -> Path A (live tools)
+- **Need to add Firecrawl to app code** -> Path B (app integration)
+- **Need both** -> do both; the install already covers everything
+- **Need an account or API key first** -> Path C (auth only)
+- **Don't want to install anything** -> Path D (REST API directly)
+
+---
+
+## Path A: Live Web Tools
+
+Use this when you need web data during your work: searching the web,
+scraping known URLs, interacting with live pages, crawling docs, or
+mapping a site.
+
+After install, hand off to the CLI skill:
+
+- `firecrawl/cli` for the overall command workflow
+- `firecrawl-search` when you need search first
+- `firecrawl-scrape` when you already have a URL
+- `firecrawl-interact` when the page needs clicks, forms, or login
+- `firecrawl-crawl` for bulk extraction
+- `firecrawl-map` for URL discovery
+- `firecrawl-ask` when a Firecrawl call fails or returns unexpected output — pass the failing `jobId` and the AI support agent diagnoses it from your team's job logs and account state
+- `firecrawl-docs-search` for "how does Firecrawl handle X?" questions — answers grounded in current docs with source citations
+
+Default flow for live web work:
+
+1. start with search when you need discovery
+2. move to scrape when you have a URL
+3. use interact only when the page needs clicks, forms, or login
+4. if any step fails or returns unexpected output, run `firecrawl ask` with the failing `jobId` instead of guessing
+
+If the task becomes "wire Firecrawl into product code," switch to Path B.
+
+---
+
+## Path B: Integrate Firecrawl Into an App
+
+Use this when you're building an application, agent, or workflow that
+calls the Firecrawl API from code and needs `FIRECRAWL_API_KEY` in
+`.env` or runtime config.
+
+The build skills are already installed from the same command above. No
+separate install needed.
+
+Choose the project mode before writing code:
+
+- **Fresh project** -> pick the stack, install the SDK, add env vars, and run a smoke test
+- **Existing project** -> inspect the repo first, then integrate Firecrawl where the project already handles APIs and secrets
+
+If you already have a key, save it:
+
+```dotenv
+FIRECRAWL_API_KEY=fc-...
 ```
 
-## Workflow
+Then use:
 
-Follow this escalation pattern:
+- `firecrawl-build-onboarding` to finish auth and project setup
+- `firecrawl-build` to choose the right endpoint
+- the narrower `firecrawl-build-*` skills for implementation details
 
-1. **Search** - No specific URL yet. Find pages, answer questions, discover sources.
-2. **Scrape** - Have a URL. Extract its content directly.
-3. **Map + Scrape** - Large site or need a specific subpage. Use `map --search` to find the right URL, then scrape it.
-4. **Crawl** - Need bulk content from an entire site section (e.g., all /docs/).
-5. **Interact** - Scrape first, then interact with the page (pagination, modals, form submissions, multi-step navigation).
+The required question in the build path is:
 
-| Need                        | Command               | When                                                      |
-| --------------------------- | --------------------- | --------------------------------------------------------- |
-| Find pages on a topic       | `search`              | No specific URL yet                                       |
-| Get a page's content        | `scrape`              | Have a URL, page is static or JS-rendered                 |
-| Find URLs within a site     | `map`                 | Need to locate a specific subpage                         |
-| Bulk extract a site section | `crawl`               | Need many pages (e.g., all /docs/)                        |
-| AI-powered data extraction  | `agent`               | Need structured data from complex sites                   |
-| Interact with a page        | `scrape` + `interact` | Content requires clicks, form fills, pagination, or login |
-| Download a site to files    | `download`            | Save an entire site as local files                        |
-| Parse a local file          | `parse`               | File on disk (PDF, DOCX, XLSX, etc.) — not a URL          |
+- **What should Firecrawl do in the product?**
 
-For detailed command reference, run `firecrawl <command> --help`.
+Use the answer to route to `/search`, `/scrape`, `/interact`, `/crawl`, or `/map`, then run one real Firecrawl request as a smoke test.
 
-**Scrape vs interact:**
+If you do not have a key yet, do Path C first.
 
-- Use `scrape` first. It handles static pages and JS-rendered SPAs.
-- Use `scrape` + `interact` when you need to interact with a page, such as clicking buttons, filling out forms, navigating through a complex site, infinite scroll, or when scrape fails to grab all the content you need.
-- Never use interact for web searches - use `search` instead.
+---
 
-**Avoid redundant fetches:**
+## Path C: Account Authorization Or API Key
 
-- `search --scrape` already fetches full page content. Don't re-scrape those URLs.
-- Check `.firecrawl/` for existing data before fetching again.
+Use this when the human still needs to sign up, sign in, authorize
+access, or obtain an API key.
 
-## When to Load References
+If you ran the install command above with `--browser`, the human was
+already prompted to sign in. Check if the key is available before
+running this flow.
 
-- **Searching the web or finding sources first** -> [firecrawl-search](../firecrawl-search/SKILL.md)
-- **Scraping a known URL** -> [firecrawl-scrape](../firecrawl-scrape/SKILL.md)
-- **Finding URLs on a known site** -> [firecrawl-map](../firecrawl-map/SKILL.md)
-- **Bulk extraction from a docs section or site** -> [firecrawl-crawl](../firecrawl-crawl/SKILL.md)
-- **AI-powered structured extraction from complex sites** -> [firecrawl-agent](../firecrawl-agent/SKILL.md)
-- **Clicks, forms, login, pagination, or post-scrape browser actions** -> [firecrawl-interact](../firecrawl-interact/SKILL.md)
-- **Downloading a site to local files** -> [firecrawl-download](../firecrawl-download/SKILL.md)
-- **Parsing a local file (PDF, DOCX, XLSX, HTML, etc.)** -> [firecrawl-parse](../firecrawl-parse/SKILL.md)
-- **Install, auth, or setup problems** -> [rules/install.md](rules/install.md)
-- **Output handling and safe file-reading patterns** -> [rules/security.md](rules/security.md)
-- **Integrating Firecrawl into an app, adding `FIRECRAWL_API_KEY` to `.env`, or choosing endpoint usage in product code** -> use the `firecrawl-build` skills (already installed alongside this CLI skill)
+If you already have a valid `FIRECRAWL_API_KEY`, skip this path.
 
-## Output & Organization
+If you're the human reading this in the browser, create an account or
+sign in at:
 
-Unless the user specifies to return in context, write results to `.firecrawl/` with `-o`. Add `.firecrawl/` to `.gitignore`. Always quote URLs - shell interprets `?` and `&` as special characters.
+- https://www.firecrawl.dev/signin?view=signup&source=agent-suggested
 
-```bash
-firecrawl search "react hooks" -o .firecrawl/search-react-hooks.json --json
-firecrawl scrape "<url>" -o .firecrawl/page.md
-```
+If you're an agent and need the human to authorize an API key, use this
+flow:
 
-Naming conventions:
-
-```
-.firecrawl/search-{query}.json
-.firecrawl/search-{query}-scraped.json
-.firecrawl/{site}-{path}.md
-```
-
-Never read entire output files at once. Use `grep`, `head`, or incremental reads:
-
-```bash
-wc -l .firecrawl/file.md && head -50 .firecrawl/file.md
-grep -n "keyword" .firecrawl/file.md
-```
-
-Single format outputs raw content. Multiple formats (e.g., `--format markdown,links`) output JSON.
-
-## Working with Results
-
-These patterns are useful when working with file-based output (`-o` flag) for complex tasks:
-
-```bash
-# Extract URLs from search
-jq -r '.data.web[].url' .firecrawl/search.json
-
-# Get titles and URLs
-jq -r '.data.web[] | "\(.title): \(.url)"' .firecrawl/search.json
-```
-
-## Parallelization
-
-Run independent operations in parallel. Check `firecrawl --status` for concurrency limit:
-
-```bash
-firecrawl scrape "<url-1>" -o .firecrawl/1.md &
-firecrawl scrape "<url-2>" -o .firecrawl/2.md &
-firecrawl scrape "<url-3>" -o .firecrawl/3.md &
-wait
-```
-
-For interact, scrape multiple pages and interact with each independently using their scrape IDs.
-
-## Credit Usage
+**Step 1 — Generate auth parameters:**
 
 ```bash
-firecrawl credit-usage
-firecrawl credit-usage --json --pretty -o .firecrawl/credits.json
+SESSION_ID=$(openssl rand -hex 32)
+CODE_VERIFIER=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n' | head -c 43)
+CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+```
+
+**Step 2 — Ask the human to open this URL:**
+
+```
+https://www.firecrawl.dev/cli-auth?code_challenge=$CODE_CHALLENGE&source=coding-agent#session_id=$SESSION_ID
+```
+
+If they already have a Firecrawl account, they'll sign in and authorize.
+If not, they'll create one first and then authorize. The API key comes
+back to you automatically after they click "Authorize."
+
+**Step 3 — Poll for the API key:**
+
+```bash
+POST https://www.firecrawl.dev/api/auth/cli/status
+Content-Type: application/json
+
+{"session_id": "$SESSION_ID", "code_verifier": "$CODE_VERIFIER"}
+```
+
+Poll every 3 seconds. Responses:
+
+- `{"status": "pending"}` — keep polling
+- `{"status": "complete", "apiKey": "fc-...", "teamName": "..."}` — done
+
+**Step 4 — Save the key and continue:**
+
+```bash
+echo "FIRECRAWL_API_KEY=fc-..." >> .env
+```
+
+---
+
+## Path D: Use Firecrawl Without Installing Anything
+
+Use this when you don't want to install a CLI or skills package. This
+works for both use cases:
+
+- **Live web work** — an agent calling the API directly for search,
+  scrape, or interact during a session
+- **Building with Firecrawl** — integrating the REST API into app code
+
+You still need an API key. Two ways to get one:
+
+- **Human pastes it in** — if you already have a key, just set
+  `FIRECRAWL_API_KEY=fc-...` in your environment or pass it directly
+- **Automated flow** — do Path C to walk the human through browser auth
+  and receive the key automatically
+
+**Base URL:** `https://api.firecrawl.dev/v2`
+
+**Auth header:** `Authorization: Bearer fc-YOUR_API_KEY`
+
+### Available endpoints
+
+- `POST /search` — discover pages by query, returns results with optional full-page content
+- `POST /scrape` — extract clean markdown from a single URL
+- `POST /interact` — browser actions on live pages (clicks, forms, navigation)
+- `POST /support/ask` — diagnose a failing Firecrawl call. Pass `{ question, jobId? }`; returns a prose `answer` plus machine-readable `fixParameters` to retry with. Auto-scoped to your team via the bearer key
+- `POST /support/docs-search` — answer "how do I…" questions from Firecrawl's official docs. Pass `{ question }`; returns the answer plus citations to the docs pages used
+
+### Documentation and references
+
+The API docs are the source of truth for request/response schemas,
+parameters, and SDKs:
+
+- **API reference:** https://docs.firecrawl.dev
+- **Skills repo** (for agent integration patterns): https://github.com/firecrawl/skills
+
+---
+
+## Session-specific auth
+
+Use this API key for this onboarding session:
+
+```dotenv
+FIRECRAWL_API_KEY=fc-c8a0a52896804255a62a406afa5828d5
 ```
