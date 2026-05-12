@@ -53,7 +53,7 @@ The pipeline has four major planes:
                                          v
                          +---------------+--------------+
                          | Export + Feedback Layer      |
-                         | Excel, HubSpot, ZoomInfo     |
+                         | Excel, CRM, enrichment exports     |
                          +------------------------------+
 ```
 
@@ -106,7 +106,7 @@ For tec5USA, the questionnaire contains:
 - Competitors: Ametek, Horiba, Thermo Fisher, Kaiser/Endress+Hauser, Bruker, Metrohm, Anton Paar, FOSS, Yokogawa, and others
 - Target titles: process engineers, plant managers, operations managers, engineering managers, director/VP level, COO, PAT, QA/QC, MSAT, R&D
 - Signals: capacity expansion, new plant announcements, hiring, CapEx, trade shows, FDA/PAT filings, M&A
-- Output: weekly Excel file for HubSpot import
+- Output: weekly Excel file for CRM import
 
 ### 4.2 Human Expert Configuration
 
@@ -262,19 +262,14 @@ Source categories:
 
 | Category | Examples | Recommended Method |
 |---|---|---|
-| Company websites | News, press, careers, product pages | Scrapy, requests, Playwright, Firecrawl |
-| Search APIs | Bing, Google Programmable Search, SerpAPI | Official API |
-| Trade shows | Exhibitor lists, agenda pages, speaker pages | API/export if available, otherwise permitted crawl |
-| Job boards | Company career pages, selected public boards | API first, crawl only when permitted |
-| Upwork | Marketplace jobs | Official Upwork GraphQL API |
-| LinkedIn | Company/person info | Official API, approved partner, Sales Navigator/CRM sync, or licensed export only |
-| ZoomInfo | Contacts and firmographics | Licensed API/export/integration only |
-| Apollo/Clearbit/etc. | Contact enrichment | Licensed enrichment API |
-| News/RSS | Industry publications | RSS/API/licensed feeds |
-| SEC/filings | Public company signals | Official data feeds |
-| Forums | Reddit, niche forums | Official API where available, public permitted pages |
-
-Compliance note: LinkedIn should not be crawled by browser automation or scraping outside official APIs or licensed workflows. ZoomInfo should be treated as a licensed data provider, not a website to scrape.
+| Owned or public websites | News, press, careers, product pages | Scrapy, requests, Playwright, managed extraction service |
+| Search providers | Keyword search results | Official API or configured search provider |
+| Event directories | Exhibitor lists, agenda pages, speaker pages | API/export if available, otherwise permitted crawl |
+| Job or project boards | Public listings, company career pages | API first, crawl only when permitted |
+| Contact enrichment systems | Contacts and firmographics | Licensed API/export/integration |
+| News and feeds | Industry publications | RSS/API/licensed feeds |
+| Public data portals | Public company or project signals | Official data feeds |
+| Forums and communities | Public discussions | Official API where available, public permitted pages |
 
 ### Stage 6: Query And Crawl Planning
 
@@ -327,7 +322,7 @@ Recommended tools:
 
 - Scrapy for scalable crawling
 - Playwright for JS-rendered pages
-- Firecrawl for managed page-to-markdown or structured web extraction
+- Managed extraction service for page-to-markdown or structured web extraction
 - requests/httpx for APIs
 - Prefect for orchestration
 - Redis/Celery or Prefect task runners for background work
@@ -413,7 +408,7 @@ Responsibilities:
 - Resolve website/domain
 - Match subsidiaries/parent companies
 - Deduplicate by domain, normalized name, and external IDs
-- Check Salesforce/HubSpot suppression
+- Check CRM suppression
 - Check existing pipeline/customer lists
 - Check competitor exclusions
 
@@ -423,8 +418,8 @@ Resolution signals:
 - legal name
 - DBA names
 - address
-- LinkedIn company URL if licensed
-- ZoomInfo/Apollo/Clearbit IDs if licensed
+- external profile URL if available from an approved source
+- enrichment provider IDs if available
 - CRM account ID
 
 ### Stage 11: Contact Discovery And Enrichment
@@ -433,12 +428,12 @@ Contact discovery should happen after account relevance is established. This red
 
 Contact sources:
 
-- licensed providers such as ZoomInfo, Apollo, Clearbit, Cognism, People Data Labs
-- HubSpot/Salesforce existing contacts
-- trade show lead sheets
+- licensed contact enrichment providers
+- CRM existing contacts
+- event or campaign lead sheets
 - company leadership/team pages when permitted
-- official conference speaker/exhibitor pages when permitted
-- LinkedIn only via approved API/partner/export workflow
+- official speaker/exhibitor pages when permitted
+- approved source exports
 
 The LLM can extract contact candidates from permitted page text, but verified email and phone should come from licensed enrichment or first-party CRM/trade show data.
 
@@ -547,14 +542,14 @@ The review UI should show:
 
 ### Stage 14: Export
 
-For tec5USA v1, export weekly Excel files for HubSpot upload.
+For tec5USA v1, export weekly Excel files for CRM upload.
 
 Future options:
 
-- HubSpot Imports API
-- HubSpot CRM object API
-- Salesforce Lead/Contact/Account API
-- ZoomInfo tagged list
+- CRM import API
+- CRM object API
+- CRM lead/contact/account API
+- enrichment-provider tagged list
 - CSV/Excel
 - webhook to marketing automation
 
@@ -580,7 +575,7 @@ Minimum export columns:
 - contact_title
 - contact_email
 - contact_phone
-- contact_linkedin_url
+- contact_profile_url
 - research_note
 - source_names
 - export_batch_id
@@ -672,7 +667,7 @@ feedback_learner
 | Agent/state orchestration | LangGraph |
 | Crawling | Scrapy |
 | JS rendering | Playwright |
-| Managed web extraction option | Firecrawl |
+| Managed web extraction option | managed extraction service |
 | Database | Postgres |
 | Vector search | pgvector |
 | ORM/migrations | SQLAlchemy + Alembic |
@@ -682,7 +677,7 @@ feedback_learner
 | Embeddings | OpenAI text embeddings or equivalent |
 | Admin/review UI | Streamlit for MVP, Next.js for product version |
 | Queue/background tasks | Prefect task runners first; Celery/Redis if needed |
-| Export | XLSX/CSV first, HubSpot API later |
+| Export | XLSX/CSV first, CRM API later |
 | Observability | LangSmith, OpenTelemetry, Sentry, structured logs |
 
 ### Why This Stack
@@ -694,7 +689,7 @@ feedback_learner
 - LangGraph is useful for stateful AI workflows with human review and checkpoints.
 - Scrapy handles broad crawling better than ad hoc scripts.
 - Playwright handles JavaScript-heavy pages when needed.
-- Firecrawl can reduce custom scraping work for some sources.
+- A managed extraction service can reduce custom scraping work for some sources.
 - FastAPI is simple and production-friendly for internal APIs.
 
 ## 8. Database Blueprint
@@ -946,7 +941,7 @@ contact_candidates
   function_area
   email
   phone
-  linkedin_url
+  profile_url
   source
   verification_status
   confidence
@@ -1026,11 +1021,11 @@ Example connector classes:
 CompanyWebsiteConnector
 SearchApiConnector
 TradeShowConnector
-UpworkGraphQLConnector
-ZoomInfoApiConnector
-ApolloEnrichmentConnector
-HubSpotConnector
-SalesforceConnector
+MarketplaceApiConnector
+ContactEnrichmentConnector
+SecondaryContactEnrichmentConnector
+CrmConnector
+SecondaryCrmConnector
 RssNewsConnector
 ForumConnector
 ```
@@ -1219,7 +1214,7 @@ exclusions:
 delivery:
   cadence: weekly
   format: xlsx
-  destination: hubspot_import
+  destination: crm_import
 ```
 
 ## 13. LLM Usage Pattern
@@ -1261,8 +1256,8 @@ Rules:
 
 - Respect robots.txt and source terms.
 - Prefer official APIs and licensed data providers.
-- Do not scrape LinkedIn outside approved APIs or licensed workflows.
-- Do not scrape ZoomInfo; use licensed API/export/integration.
+- Use official APIs, approved exports, or permitted crawling modes for restricted sources.
+- Keep restricted sources behind explicit connector policy controls.
 - Store source evidence and terms status per connector.
 - Encrypt API keys and personal data.
 - Maintain suppression lists.
@@ -1335,8 +1330,8 @@ Deliverables:
 
 Deliverables:
 
-- licensed provider integration such as ZoomInfo, Apollo, or Clearbit
-- CRM dedupe against Salesforce/HubSpot
+- licensed contact enrichment integration
+- CRM dedupe
 - contact verification status
 - title-group matching
 
@@ -1347,7 +1342,7 @@ Deliverables:
 - review dashboard
 - lead approval/rejection
 - weekly Excel export
-- HubSpot import mapping
+- CRM import mapping
 - export audit log
 
 ### Phase 6: Feedback Learning
@@ -1410,11 +1405,11 @@ marketing-pipeline/
       company_site.py
       rss_news.py
       trade_show.py
-      upwork.py
-      zoominfo.py
-      apollo.py
-      hubspot.py
-      salesforce.py
+      marketplace_api.py
+      contact_enrichment.py
+      secondary_contact_enrichment.py
+      crm.py
+      secondary_crm.py
     review_ui/
       streamlit_app.py
   tests/
@@ -1427,18 +1422,1281 @@ marketing-pipeline/
 
 - Scrapy: high-level crawling and scraping framework for extracting structured data from websites: https://docs.scrapy.org/
 - Playwright: browser automation for JavaScript-heavy pages: https://playwright.dev/
-- Firecrawl Extract: structured web extraction from pages using a schema/prompt: https://docs.firecrawl.dev/api-reference/v2-endpoint/extract
+- Managed extraction service: optional structured web extraction from pages using a schema or prompt
 - LangGraph: durable execution, streaming, human-in-the-loop agent orchestration: https://docs.langchain.com/langgraph
 - Prefect schedules: scheduled workflow runs with cron, interval, and RRule options: https://docs.prefect.io/latest/concepts/schedules
 - OpenAI Structured Outputs: schema-constrained model output: https://platform.openai.com/docs/guides/structured-outputs
 - pgvector: vector similarity search for Postgres: https://github.com/pgvector/pgvector
-- HubSpot Imports API: import contacts, companies, notes, and CRM records: https://developers.hubspot.com/docs/api-reference/crm-imports-v3/guide
-- Upwork GraphQL API: official API for marketplace/job data where permissions allow: https://www.upwork.com/developer/documentation/graphql/api/docs/index.html
-- Apollo People API: example of licensed people search/enrichment API: https://docs.apollo.io/reference/people-api-search
-- LinkedIn API Terms: use official APIs and avoid non-official scraping/crawling: https://www.linkedin.com/legal/l/api-terms-of-use
+- CRM import API: import contacts, companies, notes, and CRM records through the chosen CRM.
+- Marketplace API: use official marketplace or job-board APIs where permissions allow
+- Contact enrichment API: use the chosen licensed enrichment provider API
+- Restricted source terms: use official APIs or approved imports for restricted sources
 - FTC CAN-SPAM compliance guide: https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business
 
-## 18. First Build Recommendation
+## 18. Configurable Search And Source Scraping Architecture
+
+The pipeline should support arbitrary configured sources without hardcoding domains into the workflow. The architecture should separate discovery, policy decisions, fetching, extraction, and enrichment.
+
+### 18.1 Source Flow
+
+```text
+ICP config + source config
+  |
+  v
+search provider
+  Search API / custom search provider / managed search service / source-native API
+  |
+  v
+url_candidates
+  |
+  v
+source policy engine
+  allow / block / require official API / require manual import / require review
+  |
+  v
+connector router
+  GenericWebConnector / ManagedExtractionConnector / ApiConnector / RestrictedSourceConnector
+  |
+  v
+raw artifacts
+  HTML / markdown / JSON / PDF / screenshot metadata
+  |
+  v
+page classifier
+  |
+  v
+entity + signal extraction
+  |
+  v
+company/contact resolution
+```
+
+This means the pipeline can begin from:
+
+- manually configured source URLs
+- search queries generated from ICP
+- managed search results
+- search-provider results
+- source-native APIs
+- uploaded CSV/XLSX exports
+- CRM exports
+
+### 18.2 Source Policy Engine
+
+The source policy engine is mandatory. It prevents the crawler from treating every search result URL as equally fetchable.
+
+Policy decision values:
+
+```text
+allow_fetch
+allow_authenticated_fetch
+allow_api_only
+allow_manual_import_only
+allow_mock_only
+require_human_approval
+block
+```
+
+Example policy config:
+
+```yaml
+source_policies:
+  default:
+    decision: require_human_approval
+    respect_robots_txt: true
+    max_pages_per_domain: 100
+    rate_limit_per_minute: 10
+
+  owned_public_websites:
+    decision: allow_fetch
+    connector: GenericWebConnector
+    respect_robots_txt: true
+
+  event_directories:
+    decision: allow_fetch
+    connector: GenericWebConnector
+    respect_robots_txt: true
+
+  news_or_feeds:
+    decision: allow_fetch
+    connector: RssConnector
+
+  authenticated_owned_site:
+    decision: allow_authenticated_fetch
+    connector: AuthenticatedWebConnector
+    requires_authorized_access: true
+
+  marketplace_or_job_board:
+    decision: allow_api_only
+    connector: MarketplaceApiConnector
+```
+
+### 18.3 URL Candidate Table
+
+Search results should not be fetched immediately. Store them first, then route them through policy.
+
+```sql
+url_candidates
+  id
+  client_id
+  source_query_id
+  discovered_by
+  url
+  domain
+  title
+  snippet
+  rank
+  discovered_at
+  policy_decision
+  policy_reason
+  routed_connector
+  status
+```
+
+Statuses:
+
+```text
+new
+policy_pending
+approved_for_fetch
+api_only
+manual_import_only
+mock_only
+blocked
+fetched
+failed
+```
+
+### 18.4 Search Provider Interface
+
+Search providers only discover URLs. They do not decide whether a URL can be fetched.
+
+```python
+from typing import Protocol
+
+class SearchProvider(Protocol):
+    name: str
+
+    def search(self, query: str, config: dict) -> list[dict]:
+        """Return URL candidates with title, snippet, rank, and metadata."""
+```
+
+Implementations:
+
+```text
+GenericSearchProvider
+ProgrammableSearchProvider
+SearchAggregatorProvider
+ManagedSearchProvider
+SourceNativeSearchProvider
+CsvSeedProvider
+```
+
+### 18.5 Connector Router
+
+The connector router picks a connector only after policy evaluation.
+
+```python
+def route_candidate(candidate: UrlCandidate, policy: SourcePolicy) -> str:
+    if policy.decision == "allow_fetch":
+        return policy.connector
+    if policy.decision == "allow_authenticated_fetch":
+        return policy.connector
+    if policy.decision == "allow_api_only":
+        return policy.connector
+    if policy.decision == "allow_manual_import_only":
+        return "ManualImportConnector"
+    if policy.decision == "allow_mock_only":
+        return "MockFixtureConnector"
+    if policy.decision == "require_human_approval":
+        return "ReviewQueue"
+    return "BlockedConnector"
+```
+
+### 18.6 Generic Fetch Connector
+
+Use this only for sources that are allowed by policy.
+
+```python
+class GenericWebConnector:
+    def fetch(self, url: str, config: dict) -> dict:
+        """Fetch an allowed public page and store a raw artifact."""
+        # Implementation should include timeout, retry, rate limit, robots policy,
+        # content hash, canonical URL, and artifact storage.
+        raise NotImplementedError
+```
+
+The generic connector should support:
+
+- HTTP fetch
+- optional Playwright rendering for allowed JS-heavy sites
+- rate limits
+- content hash deduplication
+- canonical URL extraction
+- metadata extraction
+- raw artifact storage
+- screenshot metadata only when needed
+
+### 18.7 Authenticated Source Configuration Page
+
+The application should provide a source configuration page where an admin can register one or more crawlable sources. A source can be public or authenticated. Authenticated crawling is intended for sites where the operator has authorized access, such as owned portals, client-provided portals, private directories, internal tools, or paid data systems that allow this usage.
+
+UI fields:
+
+```text
+Source name
+Source type: website / portal / directory / feed / API / search provider
+Base URL
+Seed URLs
+Allowed URL patterns
+Blocked URL patterns
+Crawl depth
+Max pages per run
+Rate limit
+Render mode: HTTP only / browser rendering
+Auth required: yes/no
+Auth strategy
+Credential profile
+Login test status
+Last crawl status
+Enabled/disabled
+```
+
+Auth strategies:
+
+```text
+none
+basic_auth
+form_login
+cookie_import
+session_storage_state
+oauth_client_credentials
+api_key_header
+api_key_query_param
+custom_login_flow
+```
+
+### 18.8 Credential Vault And Session Manager
+
+Credentials must not be stored directly in source config rows. Store encrypted secrets in a vault or encrypted secret table, then reference them by ID.
+
+Credential profile table:
+
+```sql
+source_credentials
+  id
+  client_id
+  source_connector_id
+  name
+  auth_strategy
+  username_secret_ref
+  password_secret_ref
+  api_key_secret_ref
+  cookie_secret_ref
+  oauth_client_id_secret_ref
+  oauth_client_secret_secret_ref
+  browser_storage_state_secret_ref
+  login_url
+  login_config_json
+  status
+  last_validated_at
+  created_at
+  updated_at
+```
+
+Session manager responsibilities:
+
+- Retrieve credentials from the vault only at runtime.
+- Run login flow if no valid session exists.
+- Store browser session state separately from raw credentials.
+- Refresh expired sessions.
+- Mark credentials invalid when login fails.
+- Support manual re-auth when MFA or CAPTCHA is present.
+- Never expose secrets in logs, crawl artifacts, screenshots, traces, or LLM prompts.
+
+### 18.9 Authenticated Crawl Flow
+
+Authenticated crawling should work like this:
+
+```text
+configured source selected
+  |
+  v
+load source config
+  |
+  v
+auth required?
+  |
+  +-- no  -> GenericWebConnector
+  |
+  +-- yes -> credential lookup
+              |
+              v
+            session manager
+              |
+              v
+            login / restore session
+              |
+              v
+            authenticated browser or HTTP client
+              |
+              v
+            scoped crawler
+              |
+              v
+            raw artifacts
+```
+
+The authenticated connector should support two execution modes:
+
+```text
+HTTP session mode
+  Good for form login, cookies, simple pages, APIs, server-rendered pages.
+
+Browser session mode
+  Good for JavaScript-heavy portals, dynamic navigation, client-side rendering.
+```
+
+Browser session mode should use a saved storage state when possible:
+
+```text
+login once
+  -> save encrypted browser storage state
+  -> reuse storage state on future runs
+  -> refresh when expired
+```
+
+### 18.10 Search-Origin Flow With Authenticated Sources
+
+The pipeline can start from search results and then decide whether a result belongs to a configured authenticated source.
+
+```text
+search query generated from ICP
+  |
+  v
+search provider returns URL candidates
+  |
+  v
+normalize URL and domain
+  |
+  v
+match URL against configured source registry
+  |
+  +-- matching authenticated source
+  |     |
+  |     v
+  |   use that source's credential profile and crawl scope
+  |
+  +-- matching unauthenticated source
+  |     |
+  |     v
+  |   fetch with generic connector
+  |
+  +-- no configured source match
+        |
+        v
+      apply default policy: ignore / require review / fetch public page
+```
+
+Matching rules:
+
+- exact domain match
+- subdomain match
+- allowed URL pattern match
+- source alias match
+- canonical URL match
+
+Example:
+
+```text
+Configured source:
+  base_url = https://client-portal.example.com
+  allowed_patterns = /companies/*, /profiles/*
+  credential_profile = client_portal_admin
+
+Search result:
+  https://client-portal.example.com/companies/acme
+
+Decision:
+  Use AuthenticatedWebConnector with credential profile client_portal_admin.
+```
+
+### 18.11 Scoped Crawling Rules
+
+Authenticated crawling must be tightly scoped so the crawler does not wander through unrelated or destructive pages.
+
+Required controls:
+
+- allowed domains
+- allowed path patterns
+- blocked path patterns
+- max depth
+- max pages
+- max runtime
+- rate limit
+- content type allowlist
+- query parameter rules
+- duplicate URL canonicalization
+- logout URL blocklist
+- write-action blocklist
+
+Blocked action examples:
+
+```text
+/logout
+/delete
+/remove
+/update
+/edit
+/checkout
+/payment
+/settings
+/admin/actions
+```
+
+The crawler should default to read-only GET requests unless a connector explicitly defines a safe POST required for search pagination or login.
+
+### 18.12 Authenticated Connector Interface
+
+```python
+from typing import Protocol
+
+class AuthenticatedWebConnector(Protocol):
+    def validate_credentials(self, source_config: dict, credential_profile: dict) -> dict:
+        """Attempt login and return validation status without crawling."""
+
+    def create_session(self, source_config: dict, credential_profile: dict) -> object:
+        """Create an authenticated HTTP or browser session."""
+
+    def fetch(self, url: str, session: object, source_config: dict) -> dict:
+        """Fetch a URL using the authenticated session and store a raw artifact."""
+
+    def discover_links(self, artifact: dict, source_config: dict) -> list[str]:
+        """Extract in-scope links for recursive crawling."""
+```
+
+### 18.13 Authenticated Source Configuration Example
+
+```yaml
+sources:
+  - name: Client Portal
+    type: authenticated_website
+    connector: AuthenticatedWebConnector
+    enabled: true
+    base_url: https://client-portal.example.com
+    seed_urls:
+      - https://client-portal.example.com/companies
+      - https://client-portal.example.com/projects
+    auth:
+      required: true
+      strategy: form_login
+      credential_profile: client_portal_admin
+      login_url: https://client-portal.example.com/login
+      username_selector: input[name="email"]
+      password_selector: input[name="password"]
+      submit_selector: button[type="submit"]
+      success_selector: nav.account-menu
+    crawl:
+      render_mode: browser
+      max_depth: 3
+      max_pages_per_run: 1000
+      rate_limit_per_minute: 30
+      allowed_patterns:
+        - /companies/*
+        - /projects/*
+        - /profiles/*
+      blocked_patterns:
+        - /logout
+        - /settings/*
+        - /admin/actions/*
+        - /delete/*
+```
+
+### 18.14 Source Configuration Example
+
+```yaml
+sources:
+  - name: Search provider
+    type: search_provider
+    provider: generic_search_provider
+    enabled: true
+    queries:
+      - '"Raman" "process engineer" "specialty chemicals"'
+      - '"NIR" "fuel blending" "operations manager"'
+
+  - name: Managed extraction service search
+    type: search_provider
+    provider: managed_search_provider
+    enabled: true
+    queries:
+      - '"inline spectroscopy" "petrochemical" "capacity expansion"'
+
+  - name: Company websites
+    type: crawl_source
+    connector: GenericWebConnector
+    enabled: true
+    seed_urls:
+      - https://examplechemical.com/news
+      - https://examplechemical.com/careers
+
+  - name: Event directory
+    type: crawl_source
+    connector: GenericWebConnector
+    enabled: true
+    seed_urls:
+      - https://example-event-directory.com/exhibitors
+```
+
+## 19. Plugin-Based Enterprise Pipeline Architecture
+
+Your proposed flow is aligned with the current blueprint at a conceptual level, but the architecture should be adjusted in three important ways:
+
+- Treat scrape/crawl, API collection, file loading, and web search as first-class plugins, not hardcoded connectors.
+- Split the pipeline into two knowledge-building passes: first over customer/domain input, then over discovered external data.
+- Add an explicit discovery layer that uses the domain knowledge, ICP config, and knowledge graph to decide what external data is worth collecting.
+
+The enterprise-grade version should look like this:
+
+```text
+Customer docs + domain expert config
+  |
+  v
+Seed Knowledge Pipeline
+  extract -> enrich -> embed -> build knowledge graph -> store
+  |
+  v
+Discovery Planner
+  uses ICP + KG + vector search + rules to decide what to collect
+  |
+  v
+Plugin-Based Discovery Layer
+  scrape/crawl plugin
+  API plugin
+  file-storage plugin
+  search-and-crawl plugin
+  enabled/disabled per client and per run
+  |
+  v
+Raw Discovery Store
+  raw HTML / JSON / files / search results / API responses
+  |
+  v
+Discovered Knowledge Pipeline
+  clean -> classify -> extract -> enrich -> embed -> update knowledge graph
+  |
+  v
+Lead Intelligence Pipeline
+  retrieve context -> extract contacts/signals/accounts -> score -> review -> export
+```
+
+### 19.1 Control Plane And Data Plane
+
+Separate the system into a control plane and a data plane.
+
+Control plane:
+
+- Client workspace management
+- Plugin registry
+- Plugin enable/disable controls
+- Source configuration
+- Credential profile references
+- Expert ICP configuration
+- Pipeline schedules
+- Review workflows
+- Audit logs
+
+Data plane:
+
+- Document ingestion
+- File loading
+- API calls
+- Web search
+- Crawling/scraping
+- Raw artifact storage
+- Extraction
+- Enrichment
+- Embedding
+- Knowledge graph building
+- RAG retrieval
+- Lead/contact extraction
+- Scoring and export
+
+This separation makes the system scalable because business users configure what should happen while workers execute collection and extraction independently.
+
+### 19.2 Plugin Model
+
+Every external data collection method should implement the same plugin contract.
+
+Plugin types:
+
+```text
+scrape_crawl
+api_call
+file_storage
+web_search
+database_import
+manual_upload
+```
+
+Plugin states:
+
+```text
+enabled
+disabled
+paused
+error
+requires_configuration
+requires_credentials
+```
+
+Plugin interface:
+
+```python
+from typing import Protocol
+
+class DiscoveryPlugin(Protocol):
+    plugin_type: str
+
+    def validate_config(self, config: dict) -> dict:
+        """Validate plugin config before a run starts."""
+
+    def plan(self, context: dict) -> list[dict]:
+        """Create collection jobs from ICP, KG, source config, and run context."""
+
+    def collect(self, job: dict) -> list[dict]:
+        """Collect raw artifacts from the configured source."""
+
+    def normalize(self, artifact: dict) -> dict:
+        """Normalize plugin-specific output into the common raw artifact schema."""
+
+    def healthcheck(self) -> dict:
+        """Report whether the plugin is ready to run."""
+```
+
+The pipeline orchestrator should never know implementation details of a plugin. It should only call `validate_config`, `plan`, `collect`, and `normalize`.
+
+### 19.3 Plugin Registry Tables
+
+```sql
+plugin_definitions
+  id
+  name
+  plugin_type
+  description
+  handler_class
+  version
+  config_schema_json
+  enabled_globally
+  created_at
+  updated_at
+
+client_plugin_instances
+  id
+  client_id
+  plugin_definition_id
+  display_name
+  enabled
+  config_json
+  credential_profile_id
+  schedule_json
+  priority
+  created_at
+  updated_at
+
+plugin_runs
+  id
+  client_id
+  client_plugin_instance_id
+  run_id
+  status
+  started_at
+  finished_at
+  records_collected
+  artifacts_created
+  error_message
+  metrics_json
+
+plugin_jobs
+  id
+  plugin_run_id
+  job_type
+  input_json
+  status
+  retry_count
+  started_at
+  finished_at
+  error_message
+```
+
+### 19.4 Plugin Examples
+
+Scrape/crawl plugin:
+
+```yaml
+plugin_type: scrape_crawl
+enabled: true
+config:
+  seed_urls:
+    - https://example.com/companies
+  auth_required: true
+  credential_profile: example_portal_user
+  render_mode: browser
+  max_depth: 3
+  max_pages_per_run: 1000
+  allowed_patterns:
+    - /companies/*
+    - /projects/*
+  blocked_patterns:
+    - /logout
+    - /settings/*
+```
+
+API plugin:
+
+```yaml
+plugin_type: api_call
+enabled: true
+config:
+  base_url: https://api.example.com
+  auth_strategy: api_key_header
+  endpoints:
+    - path: /companies
+      method: GET
+      pagination: cursor
+    - path: /contacts
+      method: GET
+      pagination: page_number
+  rate_limit_per_minute: 60
+```
+
+File-storage plugin:
+
+```yaml
+plugin_type: file_storage
+enabled: true
+config:
+  storage_type: object_storage
+  path_prefix: client_uploads/research/
+  file_patterns:
+    - "*.pdf"
+    - "*.docx"
+    - "*.xlsx"
+    - "*.csv"
+  incremental: true
+```
+
+Web-search plugin:
+
+```yaml
+plugin_type: web_search
+enabled: true
+config:
+  provider: generic_search_provider
+  query_templates:
+    - '"{industry}" "{signal}" "{target_title}"'
+    - '"{product_use_case}" "{subsegment}" "{geography}"'
+  max_results_per_query: 20
+  result_policy: store_candidates_then_route
+```
+
+### 19.5 Seed Knowledge Pipeline
+
+This is the first mandatory step. It processes customer docs and expert configuration before any external discovery.
+
+Inputs:
+
+- Customer documents
+- Product docs
+- Questionnaires
+- Persona files
+- Competitor notes
+- Existing customer/prospect files
+- Domain expert configuration
+
+Pipeline:
+
+```text
+load docs/config
+  |
+  v
+parse and normalize
+  |
+  v
+chunk for RAG
+  |
+  v
+extract structured ICP/entities/signals
+  |
+  v
+human approval of config
+  |
+  v
+embed chunks
+  |
+  v
+build seed knowledge graph
+  |
+  v
+store in DB
+```
+
+Best practices:
+
+- Use structured output schemas for extraction.
+- Store source evidence for every extracted fact.
+- Keep raw text, chunks, embeddings, entities, and graph relationships separate.
+- Use human approval before extracted config drives discovery.
+- Use metadata-rich chunks so retrieval can filter by client, document type, entity type, and confidence.
+
+### 19.6 Discovery Planner
+
+The discovery planner decides what to collect from enabled plugins.
+
+Inputs:
+
+- Active ICP config
+- Seed knowledge graph
+- Vector search over customer docs
+- Existing discovered knowledge
+- Feedback from previous runs
+- Enabled plugin instances
+
+Planner outputs:
+
+- Search queries
+- URLs to crawl
+- API jobs
+- File-load jobs
+- Recrawl jobs
+- Enrichment jobs
+
+Planner logic:
+
+```text
+retrieve relevant seed knowledge
+  |
+  v
+generate discovery hypotheses
+  |
+  v
+convert hypotheses into plugin jobs
+  |
+  v
+rank jobs by expected value
+  |
+  v
+apply source policy, rate limits, and dedupe
+  |
+  v
+dispatch jobs to enabled plugins
+```
+
+Example discovery hypothesis:
+
+```json
+{
+  "hypothesis": "Companies in this subsegment announcing expansion projects are high-fit accounts.",
+  "target_entities": ["company", "project", "facility", "contact"],
+  "signals": ["capacity_expansion", "new_facility"],
+  "plugin_types": ["web_search", "scrape_crawl", "api_call"],
+  "priority": 0.87
+}
+```
+
+### 19.7 Discovery Layer
+
+The discovery layer collects external data using enabled plugins.
+
+Collection sequence:
+
+```text
+plugin job created
+  |
+  v
+plugin validates config and credentials
+  |
+  v
+plugin collects raw artifacts
+  |
+  v
+raw artifacts stored in bronze layer
+  |
+  v
+artifact metadata emitted for processing
+```
+
+Use a medallion-style data architecture:
+
+```text
+Bronze
+  Raw artifacts exactly as collected:
+  HTML, JSON, PDF, CSV, XLSX, screenshots, API responses, search results.
+
+Silver
+  Cleaned and normalized records:
+  page text, normalized JSON, parsed tables, detected language, canonical URLs.
+
+Gold
+  Business-ready intelligence:
+  companies, contacts, signals, relationships, scores, research notes.
+```
+
+This is a proven enterprise pattern because it preserves raw lineage while letting downstream models operate on clean data.
+
+### 19.8 Discovered Knowledge Pipeline
+
+Every collected artifact should go through the same intelligence pipeline.
+
+```text
+raw artifact
+  |
+  v
+content extraction
+  |
+  v
+language detection and cleanup
+  |
+  v
+page/document classification
+  |
+  v
+relevance filter using ICP + vector retrieval
+  |
+  v
+structured extraction
+  |
+  v
+entity resolution
+  |
+  v
+embedding
+  |
+  v
+knowledge graph update
+  |
+  v
+gold intelligence tables
+```
+
+Relevance filtering should happen before expensive extraction. Use a cascade:
+
+```text
+cheap rules
+  keyword/domain/path filters
+  |
+  v
+embedding similarity
+  compare artifact to ICP/domain context
+  |
+  v
+LLM classifier
+  only for borderline or high-value artifacts
+```
+
+This reduces cost and improves quality.
+
+### 19.9 Knowledge Graph Design
+
+Use a knowledge graph to connect entities and evidence.
+
+Core node types:
+
+```text
+Client
+Product
+UseCase
+Industry
+Subsegment
+Company
+Facility
+Project
+Signal
+Person
+Title
+Source
+Artifact
+Document
+Campaign
+```
+
+Core relationship types:
+
+```text
+TARGETS
+BELONGS_TO_INDUSTRY
+HAS_SUBSEGMENT
+MENTIONS
+EVIDENCED_BY
+HAS_SIGNAL
+EMPLOYS
+HAS_TITLE
+LOCATED_IN
+COMPETES_WITH
+MATCHES_ICP
+EXCLUDED_BY
+DISCOVERED_FROM
+```
+
+Start with Postgres graph tables:
+
+```sql
+kg_nodes
+  id
+  client_id
+  node_type
+  canonical_name
+  properties_json
+  confidence
+  created_at
+  updated_at
+
+kg_edges
+  id
+  client_id
+  source_node_id
+  target_node_id
+  edge_type
+  properties_json
+  evidence_artifact_id
+  confidence
+  created_at
+```
+
+If graph traversal becomes a major product feature, a dedicated graph database can be added later. For the MVP, Postgres edge tables are usually enough and keep infrastructure simpler.
+
+### 19.10 RAG And Retrieval Optimization
+
+Use RAG at three levels:
+
+```text
+Seed RAG
+  Retrieves customer/domain docs.
+
+Discovery RAG
+  Retrieves ICP context to decide whether collected data is relevant.
+
+Lead RAG
+  Retrieves evidence around a company/person/signal before final LLM scoring.
+```
+
+Recommended retrieval techniques:
+
+- Chunk documents with 500-1500 character chunks and 10-20% overlap.
+- Store metadata: `client_id`, `source_type`, `artifact_id`, `entity_type`, `confidence`, `created_at`.
+- Use metadata filters before vector search.
+- Use hybrid retrieval: keyword search plus vector similarity.
+- Use MMR to avoid retrieving five near-duplicate chunks.
+- Rerank top results before LLM scoring when quality matters.
+- Retrieve around entities, not just free text queries.
+- Keep embedding model consistent across indexing and retrieval.
+
+Lead extraction prompt context should be assembled like this:
+
+```text
+company node
+  + related signals
+  + related contacts
+  + evidence artifacts
+  + relevant seed ICP chunks
+  + scoring rules
+```
+
+### 19.11 Lead Intelligence Pipeline
+
+Once discovered data is stored as knowledge, run the final LLM lead intelligence pipeline.
+
+```text
+candidate company/person/signal nodes
+  |
+  v
+retrieve supporting evidence
+  |
+  v
+LLM extracts marketing intelligence
+  |
+  v
+validate structured output
+  |
+  v
+score account/contact/signal
+  |
+  v
+dedupe against existing records
+  |
+  v
+human review
+  |
+  v
+export
+```
+
+Structured output schema:
+
+```json
+{
+  "company": {
+    "name": "string",
+    "website": "string",
+    "industry": "string",
+    "subsegment": "string",
+    "fit_reason": "string"
+  },
+  "signals": [
+    {
+      "type": "string",
+      "summary": "string",
+      "evidence_url": "string",
+      "confidence": 0.0
+    }
+  ],
+  "contacts": [
+    {
+      "name": "string",
+      "title": "string",
+      "role_relevance": "string",
+      "evidence_url": "string",
+      "confidence": 0.0
+    }
+  ],
+  "score": {
+    "account_fit": 0,
+    "signal_strength": 0,
+    "contact_quality": 0,
+    "evidence_quality": 0,
+    "total": 0
+  }
+}
+```
+
+### 19.12 Orchestration Pattern
+
+Use workflow orchestration for durable scheduled runs and graph orchestration for AI state.
+
+Recommended split:
+
+```text
+Workflow orchestrator
+  schedules, retries, task queues, backfills, plugin runs, batch processing.
+
+AI graph orchestrator
+  stateful extraction, retrieval, LLM calls, human review checkpoints.
+```
+
+Enterprise-grade run pattern:
+
+```text
+run_id created
+  |
+  v
+load enabled plugins
+  |
+  v
+run seed knowledge updates if docs/config changed
+  |
+  v
+create discovery plan
+  |
+  v
+execute plugin jobs in parallel with rate limits
+  |
+  v
+process artifacts through bronze -> silver -> gold
+  |
+  v
+update vector index and knowledge graph
+  |
+  v
+extract and score leads
+  |
+  v
+create review/export batch
+```
+
+### 19.13 Scalability And Reliability Best Practices
+
+Use these practices from enterprise data/AI pipelines:
+
+- Idempotent jobs: every job can be safely retried.
+- Content hashing: avoid reprocessing unchanged artifacts.
+- Checkpointing: resume long runs after failure.
+- Dead-letter queue: failed jobs are preserved for debugging.
+- Backpressure: plugin workers respect rate limits and queue capacity.
+- Data contracts: every plugin outputs the same artifact schema.
+- Schema versioning: extracted records include schema/model version.
+- Lineage: every entity links back to artifact, source, plugin run, and evidence.
+- Observability: metrics for pages collected, extraction cost, token usage, errors, lead quality.
+- Human-in-the-loop gates: approval before config changes drive large discovery runs.
+- Tenant isolation: every table and artifact includes `client_id`.
+- Cost controls: batch LLM calls, prefilter aggressively, cache extraction results.
+- Quality evaluation: maintain golden examples and regression tests for extraction/scoring.
+
+### 19.14 Updated Repository Structure
+
+```text
+marketing-pipeline/
+  app/
+    api/
+    db/
+    schemas/
+    control_plane/
+      plugin_registry/
+      source_config/
+      credential_profiles/
+      expert_config/
+    data_plane/
+      ingestion/
+      discovery/
+      artifact_processing/
+      enrichment/
+      embeddings/
+      knowledge_graph/
+      lead_intelligence/
+      export/
+    plugins/
+      base.py
+      scrape_crawl/
+      api_call/
+      file_storage/
+      web_search/
+      database_import/
+      manual_upload/
+    workflows/
+      seed_knowledge_flow.py
+      discovery_flow.py
+      artifact_processing_flow.py
+      lead_intelligence_flow.py
+    ai_graphs/
+      document_extraction_graph.py
+      discovery_planner_graph.py
+      lead_extraction_graph.py
+    review_ui/
+  tests/
+    fixtures/
+    golden_extractions/
+    plugin_contract_tests/
+```
+
+### 19.15 Revised End-To-End Flow
+
+```text
+1. Customer docs and domain expert configuration are uploaded.
+2. Seed knowledge pipeline extracts, enriches, embeds, builds KG, and stores everything.
+3. Domain expert reviews and approves extracted ICP/config.
+4. Enabled plugins are loaded from the plugin registry.
+5. Discovery planner creates jobs only for relevant targets.
+6. Scrape/crawl plugins collect configured URLs if enabled.
+7. API plugins call configured APIs if enabled.
+8. File-storage plugins load configured files if enabled.
+9. Web-search plugins search and route discovered URLs if enabled.
+10. Raw artifacts are stored in bronze.
+11. Artifacts are cleaned, classified, filtered, and normalized into silver.
+12. Entities, signals, contacts, and relationships are extracted into gold.
+13. Embeddings and knowledge graph are updated.
+14. LLM lead intelligence runs over retrieved evidence, not raw dumps.
+15. Leads are scored, reviewed, exported, and fed back into future discovery.
+```
+
+## 20. First Build Recommendation
 
 Start with the database and config-driven workflow, not with the crawler.
 
@@ -1454,7 +2712,7 @@ Upload tec5USA questionnaire
   -> enrich contacts from licensed provider or CRM
   -> score leads
   -> review dashboard
-  -> weekly HubSpot-ready Excel
+  -> weekly CRM-ready Excel
 ```
 
 This gives a controlled, explainable MVP. Once lead quality is proven, add more source connectors and automate more of the review/export loop.
