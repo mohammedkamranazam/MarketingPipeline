@@ -1,0 +1,129 @@
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: mp_postgres
+    environment:
+      POSTGRES_DB: marketing_pipeline
+      POSTGRES_USER: mp_user
+      POSTGRES_PASSWORD: mp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mp_user -d marketing_pipeline"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: mp_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mp_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mp_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    container_name: mp_sw_master
+    command: ["master", "-ip=seaweedfs-master", "-mdir=/data", "-defaultReplication=000"]
+    ports:
+      - "9333:9333"
+    volumes:
+      - seaweed_master_data:/data
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: mp_sw_volume
+    depends_on:
+      - seaweedfs-master
+    command: ["volume", "-mserver=seaweedfs-master:9333", "-ip=seaweedfs-volume", "-dir=/data", "-max=0"]
+    ports:
+      - "8080:8080"
+      - "18080:18080"
+    volumes:
+      - seaweed_volume_data:/data
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: mp_sw_filer
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    command: ["filer", "-master=seaweedfs-master:9333"]
+    ports:
+      - "8888:8888"
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    container_name: mp_sw_s3
+    depends_on:
+      - seaweedfs-filer
+    command: ["s3", "-filer=seaweedfs-filer:8888", "-port=8333"]
+    ports:
+      - "8333:8333"
+
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: mp_prefect_server
+    command: ["prefect", "server", "start", "--host", "0.0.0.0"]
+    ports:
+      - "4200:4200"
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://mp_user:mp_password@postgres:5432/marketing_pipeline
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mp_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mp_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:latest
+    container_name: mp_loki
+    ports:
+      - "3100:3100"
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+  qdrant_data:
+  seaweed_master_data:
+  seaweed_volume_data:
+  grafana_data:
