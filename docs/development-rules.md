@@ -16,6 +16,12 @@ These rules apply to every development activity in this repository.
 - `src/backend/core` contains all business logic and functional behavior.
 - If `api` and `jobs` are removed, `core` must still contain the full project logic and remain importable/buildable.
 
+## Docker-First Development
+
+- The entire project must be runnable from inside Docker for local development and verification.
+- New services, tools, scripts, and dependencies must be designed so they run in the repository's Docker workflow, not only on host machines.
+- Do not introduce development steps that require host-only runtimes or global host tooling when an equivalent Docker-based step can be used.
+
 ## Models, DTOs, And Contracts
 
 - Always use well-defined model/DTO classes for backend and frontend.
