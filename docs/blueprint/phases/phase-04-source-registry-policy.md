@@ -9,11 +9,11 @@
 
 ## Goal
 
-Create configurable source connectors and a policy engine that decides what can be fetched, imported, reviewed, or blocked.
+Create configurable source, search, enrichment, verification, and outreach connectors plus a policy engine that decides what can be fetched, imported, enriched, reviewed, exported, or blocked.
 
 ## Usable Outcome
 
-An admin can configure safe public sources and see URL candidates routed through policy before crawl.
+An admin can configure safe public sources, search providers, licensed enrichment providers, email verification providers, and outreach destinations. URL/profile candidates and provider operations are routed through policy before execution.
 
 ## Deliverables
 
@@ -23,6 +23,8 @@ An admin can configure safe public sources and see URL candidates routed through
 - URL candidate table.
 - Connector registry interface.
 - Search provider interface.
+- Provider connector types for contact enrichment, email verification, and outreach export.
+- Operation policy rules for public search, restricted profiles, licensed APIs, and campaign destinations.
 
 ## Steps
 
@@ -36,21 +38,27 @@ An admin can configure safe public sources and see URL candidates routed through
 | P04-T06 Add connector registry | Planned | 0% | connector resolution test |
 | P04-T07 Add mock search provider | Planned | 0% | deterministic candidate test |
 | P04-T08 Add source test endpoint | Planned | 0% | validates config without crawl |
+| P04-T09 Add provider connector policy types | Planned | 0% | enrichment, verification, and outreach operations require approved policy |
+| P04-T10 Add seed profile search policy routing | Planned | 0% | restricted profile URLs route to review/API-only/block as configured |
 
 ## Test Plan
 
 - Configure three safe public sources.
+- Configure mock search, contact enrichment, email verification, and outreach providers.
 - Route sample URLs through policy.
+- Route sample profile candidates and provider operations through policy.
 - Verify blocked paths are never approved for fetch.
+- Verify blocked enrichment or outreach operations never call provider adapters.
 - Verify default unknown source policy requires review.
 
 ## Exit Criteria
 
 - Sources are configured from API/UI, not code.
 - Policy decision exists before fetch.
+- Policy decision exists before profile search, provider enrichment, email verification, or outreach export.
 - URL candidates are stored before crawling.
 - Tests and lint pass.
 
 ## Handoff To Phase 05
 
-Phase 05 can execute allowed public crawl jobs and store raw artifacts.
+Phase 05 can execute allowed public crawl/search jobs and store raw artifacts, including permitted search/profile evidence for imported leads.

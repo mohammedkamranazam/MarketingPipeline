@@ -9,11 +9,11 @@
 
 ## Goal
 
-Support authorized authenticated sources with encrypted session state and human-in-loop recovery for MFA/CAPTCHA.
+Support authorized authenticated sources with encrypted session state and human-in-loop recovery for MFA/CAPTCHA, including restricted sources used for discovery or seed lead enrichment.
 
 ## Usable Outcome
 
-An operator can configure an authenticated source, validate login, pause on auth challenge, refresh session, and resume collection.
+An operator can configure an authenticated source, validate login, pause on auth challenge, refresh session, and resume collection or enrichment.
 
 ## Deliverables
 
@@ -24,6 +24,7 @@ An operator can configure an authenticated source, validate login, pause on auth
 - HITL auth queue states.
 - Manual re-auth UI.
 - CAPTCHA/MFA guard policy.
+- Authenticated source operation scopes for crawl, search, import, enrichment, and outreach.
 
 ## Steps
 
@@ -37,6 +38,7 @@ An operator can configure an authenticated source, validate login, pause on auth
 | P08-T06 Build manual re-auth UI | Planned | 0% | operator refresh flow |
 | P08-T07 Add CAPTCHA/MFA policy guard | Planned | 0% | challenge routes to HITL |
 | P08-T08 Add optional solver interface | Planned | 0% | disabled by default test |
+| P08-T09 Add authenticated operation scopes | Planned | 0% | credentials can be approved for crawl/search/import/enrichment/outreach independently |
 
 ## Test Plan
 
@@ -44,12 +46,14 @@ An operator can configure an authenticated source, validate login, pause on auth
 - Verify raw credentials never appear in logs/artifacts.
 - Verify expired session pauses source and creates review task.
 - Verify refreshed session resumes original job.
+- Verify a credential approved for one operation scope cannot be reused for another scope.
 
 ## Exit Criteria
 
 - Authenticated crawling works for approved test source.
 - CAPTCHA/MFA triggers HITL by default.
 - Session state is encrypted and revocable.
+- Restricted profile or bid-platform workflows run only when explicitly authorized by source policy.
 - Tests and lint pass.
 
 ## Handoff To Phase 09

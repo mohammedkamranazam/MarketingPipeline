@@ -9,11 +9,11 @@
 
 ## Goal
 
-Add next-generation intelligence: hypotheses, ROI-aware planning, temporal signals, authenticity, skeptic pass, counterfactuals, and attention prioritization.
+Add next-generation intelligence: hypotheses, ROI-aware planning, temporal signals, authenticity, skeptic pass, counterfactuals, attention prioritization, and campaign-aware enrichment strategy.
 
 ## Usable Outcome
 
-The system can prioritize discovery and review by expected business value while improving lead trust.
+The system can prioritize discovery, seed lead enrichment, and review by expected business value while improving lead trust and deliverability.
 
 ## Deliverables
 
@@ -24,6 +24,7 @@ The system can prioritize discovery and review by expected business value while 
 - Skeptic agent pass.
 - Counterfactual scoring.
 - Human attention orchestrator.
+- Value-per-verified-lead and campaign-mode prioritization.
 
 ## Steps
 
@@ -39,12 +40,15 @@ The system can prioritize discovery and review by expected business value while 
 | P10-T08 Add skeptic pass | Planned | 0% | exclusion evidence reduces score |
 | P10-T09 Add counterfactual scoring | Planned | 0% | robustness score stored |
 | P10-T10 Add attention orchestrator | Planned | 0% | review queue priority test |
+| P10-T11 Add enrichment value scoring | Planned | 0% | profile search and provider work ranked by expected verified lead value |
+| P10-T12 Add campaign-aware strategy mode | Planned | 0% | campaign mode changes source, title, verification, and review thresholds |
 
 ## Test Plan
 
 - Compare lead ranking before/after v2 features.
 - Verify all v2 features are behind flags.
 - Verify budget caps pause low-value work.
+- Verify provider calls are prioritized by expected value per verified lead.
 - Verify skeptic pass does not block without evidence.
 
 ## Exit Criteria
@@ -52,8 +56,9 @@ The system can prioritize discovery and review by expected business value while 
 - v2 intelligence can run in staging behind flags.
 - Lead review queue can sort by expected impact.
 - Cost-aware planning is auditable.
+- Campaign-aware enrichment can run behind feature flags.
 - Tests and lint pass.
 
 ## Handoff To Phase 11
 
-Phase 11 can integrate CRM outcomes and scale enterprise operations.
+Phase 11 can integrate CRM/outreach outcomes and scale enterprise operations.

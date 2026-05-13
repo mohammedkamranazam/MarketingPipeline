@@ -9,11 +9,11 @@
 
 ## Goal
 
-Make the v1 pipeline observable, secure, testable, and deployable for production clients.
+Make the v1 pipeline observable, secure, testable, and deployable for production clients across discovery and seed lead enrichment lanes.
 
 ## Usable Outcome
 
-The system can run scheduled production jobs with monitoring, audit logs, CI/CD gates, and incident runbooks.
+The system can run scheduled production jobs with monitoring, audit logs, CI/CD gates, incident runbooks, and enrichment/outreach quality metrics.
 
 ## Deliverables
 
@@ -24,6 +24,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 - Compliance export simulation.
 - CI/CD release gates.
 - Incident runbooks.
+- Provider quota, enrichment quality, email verification, and bounce-rate metrics.
 
 ## Steps
 
@@ -38,18 +39,22 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 | P09-T07 Add CI/CD workflow | Planned | 0% | PR checks pass |
 | P09-T08 Add backup/retention jobs | Planned | 0% | retention dry run |
 | P09-T09 Add incident runbooks | Planned | 0% | runbook links in ops docs |
+| P09-T10 Add enrichment/outreach metrics | Planned | 0% | lead processed, profile match, email found, verified, blocked, bounce, and provider error metrics |
 
 ## Test Plan
 
 - Run MVP E2E with tracing enabled.
 - Verify audit coverage for config/auth/export.
+- Verify audit coverage for profile search, provider enrichment, email verification, and outreach export.
 - Verify export simulation blocks policy violations.
+- Verify dashboards expose seed import throughput, verification pass rate, manual follow-up volume, provider cost, and bounce rate.
 - Verify CI gates match developer standards.
 
 ## Exit Criteria
 
 - Production release checklist passes.
 - SLO metrics are visible.
+- Deliverability and enrichment quality metrics are visible.
 - Critical runbooks exist.
 - Tests and lint pass.
 

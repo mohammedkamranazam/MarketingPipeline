@@ -11,6 +11,17 @@ Use it this way:
 
 The original [Blueprint_v1.md](Blueprint_v1.md) remains the full reference artifact. These files are intentionally smaller, phase-oriented, and build-ready.
 
+## Supported Use-Case Lanes
+
+The blueprint supports two lead-generation lanes that share one governance, evidence, review, export, and feedback core:
+
+| Lane | Starting Point | Outcome |
+|---|---|---|
+| Account discovery | Client knowledge, ICP config, and approved sources | New evidence-backed accounts, signals, contacts, and CRM-ready exports |
+| Seed lead enrichment | Imported bid/platform lead rows with name, company, source, and project context | Verified, enriched, outreach-ready leads with profile/domain evidence and deliverability checks |
+
+Both lanes must preserve source policy, typed contracts, tenant isolation, human approval, and audit lineage. The seed lead enrichment lane adds import normalization, profile/domain candidate ranking, licensed contact enrichment, email verification, and outreach-system handoff without replacing the discovery lane.
+
 ## File Map
 
 | File | Purpose |

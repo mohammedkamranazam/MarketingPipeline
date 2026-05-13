@@ -59,18 +59,24 @@ Risky features default off:
 - authenticated crawling
 - CAPTCHA solver
 - cloud LLM fallback
+- profile/domain search automation
 - contact enrichment
+- email verification provider calls
 - auto-export
+- direct outreach sync
 - v2 autonomy features
 
 ## Security Requirements
 
 - Never log secrets.
 - Never send secrets to LLMs.
+- Never ask an LLM to invent or validate emails, phone numbers, or private profile details.
 - Mask PII before export approval.
 - Block SSRF targets before fetch.
 - Treat scraped content as untrusted prompt input.
 - Default crawlers to read-only behavior.
+- Require suppression, unsubscribe, and do-not-contact checks before CRM or outreach export.
+- Store provider terms, source policy, verification result, and audit metadata for contact enrichment.
 
 ## Migration Policy
 

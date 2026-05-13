@@ -9,16 +9,18 @@
 
 ## Goal
 
-Scale the platform across clients, integrate sales/outreach systems, and learn from revenue outcomes.
+Scale the platform across clients, integrate CRM and outreach systems, and learn from revenue and engagement outcomes.
 
 ## Usable Outcome
 
-The system can ingest CRM outcomes, improve scoring from downstream results, and operate across many tenants with scale controls.
+The system can ingest CRM and outreach outcomes, improve scoring from downstream results, tune enrichment quality, and operate across many tenants with scale controls.
 
 ## Deliverables
 
 - CRM import/export connector.
+- Outreach/marketing automation connector.
 - Outcome ingestion.
+- Email engagement and bounce ingestion.
 - Revenue-aware learning workflow.
 - Strategy mode controller.
 - Advanced source expansion workflow.
@@ -38,19 +40,25 @@ The system can ingest CRM outcomes, improve scoring from downstream results, and
 | P11-T07 Add load tests | Planned | 0% | target throughput report |
 | P11-T08 Add enterprise dashboards | Planned | 0% | tenant/source/cost dashboard |
 | P11-T09 Add per-tenant hardening | Planned | 0% | RLS/metadata filter tests |
+| P11-T10 Add outreach connector | Planned | 0% | sandbox campaign/inbox export test |
+| P11-T11 Add engagement outcome ingestion | Planned | 0% | sent, bounced, opened, replied, unsubscribed events attach to leads |
+| P11-T12 Add provider quality learning | Planned | 0% | source/provider weights update through approved policy |
 
 ## Test Plan
 
 - Use sandbox CRM credentials.
+- Use sandbox outreach/marketing automation credentials.
 - Verify outbound export and inbound outcome sync.
+- Verify bounced/unsubscribed contacts update suppression and lead status.
 - Verify scoring changes require approval.
 - Run load tests for v1 target capacity.
 - Verify cross-tenant data isolation under load.
 
 ## Exit Criteria
 
-- CRM outcome loop works end-to-end.
+- CRM and outreach outcome loops work end-to-end.
 - Multi-tenant dashboards show quality/cost/source metrics.
+- Provider quality, verification, and deliverability dashboards show tenant-level metrics.
 - Load tests meet v1 targets or document bottlenecks.
 - Tests and lint pass.
 

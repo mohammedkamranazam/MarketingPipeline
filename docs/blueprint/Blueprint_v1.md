@@ -2,6 +2,8 @@
 
 Date: 2026-05-12
 
+Update note: on 2026-05-13, the blueprint was extended to support seed lead enrichment from bid/platform lead lists without replacing the original account-discovery use case.
+
 Execution note: this file is the complete reference blueprint. The build-ready modular version lives in [`README.md`](README.md), with ordered phase files, progress percentages, statuses, exit criteria, and test plans.
 
 ## 1. Purpose
@@ -14,13 +16,26 @@ The key design goal is not "scrape everything." The goal is to build a configura
 - Why do they match?
 - What recent signal makes them relevant now?
 - Which people at that company should be contacted?
+- Which imported seed leads can be safely matched to a company/domain/profile?
+- Which verified contact details are provider-sourced and deliverability-checked?
 - What source proves each recommendation?
 - How confident is the system?
-- What should be exported to CRM or a weekly lead file?
+- What should be exported to CRM, weekly lead files, or outreach systems?
+
+## 1.1 Supported Use-Case Lanes
+
+The platform must support two complementary lanes:
+
+| Lane | Starting Point | Primary Workflow | Output |
+|---|---|---|---|
+| Account discovery | Client documents, approved ICP, configured sources | Discover accounts and signals, extract entities, score, review | Evidence-backed CRM-ready leads |
+| Seed lead enrichment | Imported rows with first name, optional last name, company name, source, and notes/project context | Normalize rows, resolve company/domain, rank profile candidates, enrich/verify email, summarize research, review | Verified outreach-ready and CRM-ready leads |
+
+The seed lead enrichment lane reuses the same source policy, evidence, scoring, review, export, audit, and feedback core. It adds import normalization, profile/domain candidate ranking, licensed contact enrichment, email verification, and outreach handoff. It must not weaken the existing discovery controls.
 
 ## 2. Core Architecture Summary
 
-The pipeline has four major planes:
+The pipeline has discovery and seed-enrichment input lanes that converge into shared collection, evidence, scoring, review, export, and feedback planes:
 
 ```text
                          +------------------------------+
@@ -35,15 +50,22 @@ The pipeline has four major planes:
 +----------------+       +---------------+--------------+       +---------+---------+
                                                                       |
                                                                       v
-                         +------------------------------+       +------+------+
+                         +------------------------------+
+                         | Seed Lead Import Layer       |
+                         | bid/CRM/event/campaign rows |
+                         +---------------+--------------+
+                                         |
+                                         v
+                         +------------------------------+       +-------------+
                          | Crawl + Collection Layer     | ----> | Raw Store   |
-                         | source connectors            |       | HTML/PDF/API |
+                         | source/search/provider conn. |       | HTML/PDF/API |
                          +---------------+--------------+       +------+------+
                                          |                             |
                                          v                             v
                          +---------------+--------------+       +------+------+
                          | Extraction + Normalization   | <---- | Evidence    |
-                         | accounts, signals, contacts  |       | snapshots   |
+                         | accounts, signals, contacts, |       | snapshots   |
+                         | profiles, verifications      |       |             |
                          +---------------+--------------+       +------+------+
                                          |
                                          v
@@ -55,7 +77,7 @@ The pipeline has four major planes:
                                          v
                          +---------------+--------------+
                          | Export + Feedback Layer      |
-                         | Excel, CRM, enrichment exports     |
+                         | Excel, CRM, outreach exports |
                          +------------------------------+
 ```
 
@@ -135,6 +157,36 @@ Human experts define:
 
 The document extractor can suggest values, but a human should approve them before they drive automated crawling or outreach.
 
+### 4.3 Seed Lead Imports
+
+Seed lead imports are structured lists where a source already supplied a partial lead. The system enriches them without replacing the discovery pipeline.
+
+Required fields:
+
+- first name
+- company name
+- source
+
+Optional fields:
+
+- last name
+- title
+- location
+- company website
+- project/bid note
+- source record ID
+- campaign or inbox assignment hint
+
+Examples:
+
+- Civcast or Dodge bid platform exports
+- trade show/event lead sheets
+- CRM prospect lists
+- campaign lead sheets
+- approved partner or marketplace exports
+
+Seed imports produce `lead_import_batches` and `seed_lead_rows`. Each row preserves original values, normalized values, validation errors, source context, dedupe state, and suppression state. Imported rows are not outreach-ready until profile/domain evidence, provider enrichment, email verification, scoring, and review gates pass.
+
 ## 5. Main Pipeline Stages
 
 ### Stage 1: Client Workspace Setup
@@ -146,7 +198,9 @@ Responsibilities:
 - Create client record
 - Configure tenant isolation
 - Store CRM/export preferences
+- Store outreach/export preferences
 - Store compliance and source permissions
+- Store enabled use-case lanes: account discovery, seed lead enrichment, or both
 - Store initial pipeline status
 - Define default scoring strategy
 
@@ -187,6 +241,27 @@ Outputs:
 - extracted domain facts
 - suggested ICP config
 - source citations
+
+### Stage 2B: Seed Lead Import And Normalization
+
+Seed lead files are uploaded, parsed, validated, normalized, and stored separately from document knowledge.
+
+Responsibilities:
+
+- Accept CSV/XLSX seed lead lists.
+- Map columns to typed fields: first name, optional last name, company name, source, title, location, project/bid note, source record ID, and campaign hint.
+- Preserve original row values and normalized row values.
+- Detect missing required fields, invalid rows, duplicates, existing customers, and suppression matches.
+- Create row-level validation results that users can inspect before enrichment.
+- Route valid rows into profile/domain matching.
+
+Outputs:
+
+- `lead_import_batches`
+- `seed_lead_rows`
+- row validation errors
+- dedupe and suppression state
+- source/project context for enrichment and personalization
 
 ### Stage 3: Domain Knowledge Extraction
 
@@ -231,7 +306,11 @@ The expert console should support:
 - Define signal taxonomy
 - Define exclusions and competitors
 - Configure source connectors
+- Configure search, enrichment, verification, and outreach connectors
+- Approve profile/domain matching policy for imported leads
+- Approve provider use and deliverability thresholds
 - Define export fields
+- Define outreach export fields and campaign/inbox defaults
 - Adjust scoring weights
 
 This produces the active pipeline configuration.
@@ -269,6 +348,9 @@ Source categories:
 | Event directories | Exhibitor lists, agenda pages, speaker pages | API/export if available, otherwise permitted crawl |
 | Job or project boards | Public listings, company career pages | API first, crawl only when permitted |
 | Contact enrichment systems | Contacts and firmographics | Licensed API/export/integration |
+| Email verification systems | Deliverability status and risk | Licensed API/export/integration |
+| Outreach systems | Campaign/inbox handoff and engagement outcomes | CSV/API/webhook after review |
+| Restricted professional profiles | Profile URLs/snippets | Official API, approved export, search result metadata, or review-only depending on policy |
 | News and feeds | Industry publications | RSS/API/licensed feeds |
 | Public data portals | Public company or project signals | Official data feeds |
 | Forums and communities | Public discussions | Official API where available, public permitted pages |
@@ -283,6 +365,7 @@ Inputs:
 - active ICP config
 - source registry
 - previous crawl history
+- seed lead import rows that passed validation
 - feedback history
 - campaign priority
 
@@ -301,7 +384,9 @@ The planner should create:
 - search jobs
 - crawl jobs
 - recrawl jobs
+- profile/domain search jobs
 - enrichment jobs
+- email verification jobs
 - suppression-check jobs
 
 Each job should be idempotent and retryable.
@@ -408,6 +493,7 @@ Responsibilities:
 
 - Normalize company names
 - Resolve website/domain
+- Resolve imported seed lead company names to canonical companies and domains
 - Match subsidiaries/parent companies
 - Deduplicate by domain, normalized name, and external IDs
 - Check CRM suppression
@@ -421,12 +507,15 @@ Resolution signals:
 - DBA names
 - address
 - external profile URL if available from an approved source
+- seed lead source record ID and project/bid context
 - enrichment provider IDs if available
 - CRM account ID
 
 ### Stage 11: Contact Discovery And Enrichment
 
 Contact discovery should happen after account relevance is established. This reduces cost and avoids collecting unnecessary personal data.
+
+For seed lead enrichment, the system starts with a partial person/company row. It should first resolve the company/domain, then collect permitted profile candidates, rank them with evidence, and only then call licensed enrichment and verification providers.
 
 Contact sources:
 
@@ -436,8 +525,29 @@ Contact sources:
 - company leadership/team pages when permitted
 - official speaker/exhibitor pages when permitted
 - approved source exports
+- search-provider profile snippets or URLs when source policy allows
 
 The LLM can extract contact candidates from permitted page text, but verified email and phone should come from licensed enrichment or first-party CRM/trade show data.
+
+Seed enrichment workflow:
+
+```text
+seed row
+  -> normalize name/company/source/project context
+  -> resolve company/domain
+  -> search for permitted profile/domain candidates
+  -> rank candidates by company match, title relevance, source confidence, and location if available
+  -> call licensed enrichment provider with approved identifiers
+  -> verify email deliverability
+  -> route low-confidence, missing-email, risky, or policy-blocked rows to manual follow-up
+```
+
+Email and phone rules:
+
+- Store provider provenance for every email/phone.
+- Store verification provider, verification status, confidence/risk, and checked timestamp.
+- Do not export unverified, invalid, suppressed, or policy-blocked emails for outreach.
+- Track provider failures and rate limits separately from lead quality.
 
 Target title matching should support:
 
@@ -495,8 +605,18 @@ Example scoring details:
 | Account fit | industry, geography, employee count, subsegment |
 | Signal strength | new plant, expansion, CapEx, hiring, trade show attendance |
 | Use-case fit | process monitoring, PAT, inline spectroscopy, QA/QC, automation |
-| Contact quality | title relevance, seniority, verified email, verified phone |
+| Contact quality | title relevance, seniority, profile match confidence, verified email, verified phone |
 | Evidence confidence | source authority, recency, source count, extraction confidence |
+
+Seed lead scoring should also consider:
+
+- source row quality and completeness
+- company/domain resolution confidence
+- profile candidate ranking confidence
+- provider enrichment confidence
+- email verification status
+- project/bid note relevance
+- suppression and do-not-contact state
 
 Lead tiers:
 
@@ -538,13 +658,16 @@ The review UI should show:
 - matched signals
 - matched ICP rules
 - contact candidates
+- seed lead source row and project context when applicable
+- profile/domain candidates and ranking evidence
+- email verification and provider provenance
 - score breakdown
 - why this lead was recommended
 - export readiness
 
 ### Stage 14: Export
 
-For tec5USA v1, export weekly Excel files for CRM upload.
+For tec5USA v1, export weekly Excel files for CRM upload. For seed lead enrichment, export an approved outreach-ready CSV/XLSX or payload that can be loaded into a campaign tool only after review, suppression, and verification gates pass.
 
 Future options:
 
@@ -553,7 +676,8 @@ Future options:
 - CRM lead/contact/account API
 - enrichment-provider tagged list
 - CSV/Excel
-- webhook to marketing automation
+- webhook or API sync to marketing automation/outreach systems
+- dedicated inbox/campaign assignment payloads
 
 Minimum export columns:
 
@@ -582,6 +706,22 @@ Minimum export columns:
 - source_names
 - export_batch_id
 
+Seed enrichment and outreach export columns add:
+
+- seed_import_batch_id
+- seed_row_id
+- original_source
+- source_record_id
+- project_or_bid_context
+- profile_match_url
+- profile_match_confidence
+- email_verification_status
+- email_verification_provider
+- email_verified_at
+- outreach_inbox
+- campaign_name
+- personalization_note
+
 ### Stage 15: Feedback Loop
 
 Feedback makes the pipeline improve over time.
@@ -591,11 +731,13 @@ Capture:
 - approved/rejected leads
 - sales comments
 - reply/no reply
+- sent/opened/replied/bounced/unsubscribed engagement events
 - meeting booked
 - SQL conversion
 - opportunity creation
 - closed won/lost
 - bad contact reports
+- email verification false positives and bounces
 - wrong industry reports
 
 Feedback should update:
@@ -604,6 +746,7 @@ Feedback should update:
 - title mappings
 - negative keywords
 - source priority
+- provider priority and verification thresholds
 - query templates
 - exclusion rules
 - lookalike profiles
@@ -618,6 +761,12 @@ api-service
 
 worker-service
   Background workers for parsing, crawling, extraction, enrichment, scoring
+
+enrichment-worker
+  Profile/domain candidate ranking, licensed contact enrichment, and email verification
+
+outreach-worker
+  Outreach-ready export building and campaign/engagement outcome import
 
 scheduler-service
   Prefect deployment schedules and recurring workflows
@@ -638,6 +787,9 @@ observability
 document_extractor
   Extracts ICP, products, titles, signals, competitors, exclusions from docs
 
+seed_lead_normalizer
+  Maps uploaded lead sheets into typed rows with validation, dedupe, and suppression state
+
 retrieval_service
   Retrieves relevant domain chunks for extraction/scoring prompts
 
@@ -646,6 +798,12 @@ page_classifier
 
 entity_extractor
   Extracts company, contact, signal, facility, process, and evidence objects
+
+profile_match_ranker
+  Ranks permitted profile/domain candidates using evidence, title relevance, company match, and location when available
+
+research_summarizer
+  Generates cited two-to-three sentence company/project summaries for reviewed leads
 
 lead_scorer
   Generates score breakdown and explanation
@@ -679,7 +837,9 @@ feedback_learner
 | Embeddings | local embedding model via Ollama or provider fallback |
 | Admin/review UI | Streamlit for MVP, Next.js for product version |
 | Queue/background tasks | Prefect task runners first; Celery/Redis if needed |
-| Export | XLSX/CSV first, CRM API later |
+| Search/enrichment providers | Provider adapter contracts with mock providers first, licensed APIs later |
+| Email verification | Provider adapter contract with mock verifier first, licensed API later |
+| Export | XLSX/CSV first, CRM/outreach API later |
 | Observability | OpenTelemetry + Prometheus + Grafana + Loki (open-source-first) |
 
 ### Why This Stack
@@ -702,19 +862,20 @@ This section consolidates tool decisions for all stages and server operations.
 |---|---|---|---|
 | Stage 1 Workspace | FastAPI, PostgreSQL, Alembic, Redis | Keycloak, OPA | Tenant config, policy-aware controls |
 | Stage 2 Ingestion | Python, unstructured, pypdf, python-docx, pandas, openpyxl, pgvector | Apache Tika, OCRmyPDF, Tesseract | Typed extraction and chunking |
+| Stage 2B Seed Lead Import | pandas, openpyxl, Pydantic, PostgreSQL | CSVBox/import UI later | Typed row normalization and row-level validation |
 | Stage 3 Domain Extraction | Ollama + schema-bound extraction (Pydantic) | Claude/Gemini fallback | Local-first with strict validation |
 | Stage 4 Expert Review | Streamlit/Next.js review UI, PostgreSQL | Metabase/Superset | Mandatory approval gate |
-| Stage 5 Source Registry | Connector registry + encrypted credential references | Vault/SOPS | No hardcoded connectors |
-| Stage 6 Planning | Prefect + Redis + PostgreSQL | Temporal, Airflow | Prefect default for Python-heavy stack |
+| Stage 5 Source Registry | Connector/provider registry + encrypted credential references | Vault/SOPS | No hardcoded connectors or provider calls |
+| Stage 6 Planning | Prefect + Redis + PostgreSQL | Temporal, Airflow | Prefect default for Python-heavy stack, batch provider calls |
 | Stage 7 Collection | Scrapy + Playwright + scrapy-playwright + httpx | Crawlee (Node) | Public + authenticated + JS rendering |
 | Stage 8 Classification | Rules + lightweight model + Ollama for edge cases | Cloud LLM fallback | Cost-efficient relevance filtering |
 | Stage 9 Extraction | LangGraph + Pydantic + Ollama | Claude/Gemini fallback | Evidence-linked structured outputs |
 | Stage 10 Resolution | PostgreSQL SQL + rapidfuzz | Neo4j later | Deterministic dedupe first |
-| Stage 11 Enrichment | Approved connectors + policy engine | Licensed enrichment APIs | Compliance-first contact handling |
+| Stage 11 Enrichment | Approved connectors + policy engine + mock provider/verifier | Licensed enrichment and verification APIs | Compliance-first contact handling, no guessed emails |
 | Stage 12 Scoring | Rule scoring + LLM rationale | Feature store later | Transparent hybrid scoring |
 | Stage 13 Review | Review queue + audit logs | Slack/Email alerts | Human checkpoint before export |
-| Stage 14 Export | pandas + openpyxl + CSV/XLSX | Direct CRM API | Weekly batch export first |
-| Stage 15 Feedback | PostgreSQL feedback tables + Prefect runs | MLflow | Closed-loop quality improvements |
+| Stage 14 Export | pandas + openpyxl + CSV/XLSX | Direct CRM/outreach API | Weekly batch and outreach-ready export first |
+| Stage 15 Feedback | PostgreSQL feedback tables + Prefect runs | MLflow | Closed-loop quality and deliverability improvements |
 
 ### 7.2 Research-Backed Tool Choices (As of 2026-05-13)
 
@@ -1322,13 +1483,16 @@ Good LLM tasks:
 - extract signals from text
 - summarize why a company fits
 - map messy titles into target title groups
+- rank profile/domain candidates against a seed lead row
 - score fit with evidence
 - generate search query variants
+- generate cited research and personalization notes from stored evidence
 
 Avoid:
 
 - asking the LLM to browse without source constraints
 - asking it to guess emails or phone numbers
+- treating LLM-selected email guesses as verified contact data
 - accepting uncited claims
 - making outreach decisions without human approval
 - one LLM call per item at scale
@@ -1357,6 +1521,9 @@ Rules:
 - Maintain suppression lists.
 - Maintain unsubscribe/do-not-contact lists.
 - Add audit logs for exports and contact enrichment.
+- Add audit logs for profile search, email verification, and outreach export.
+- Require verified deliverability status before outreach export.
+- Track bounces, unsubscribes, and do-not-contact updates as compliance-impacting feedback.
 - Review CAN-SPAM, GDPR, CCPA/CPRA, CASL, and LGPD requirements depending on geography.
 - Export only reviewed and approved contacts.
 
@@ -1375,23 +1542,25 @@ PII controls:
 
 Deliverables:
 
-- `clients`, `documents`, `source_connectors`, `company_candidates`, `account_signals`, `contact_candidates`, `lead_candidates` tables
+- `clients`, `documents`, `lead_import_batches`, `seed_lead_rows`, `source_connectors`, `company_candidates`, `account_signals`, `contact_candidates`, `lead_candidates` tables
 - FastAPI skeleton
 - Postgres + pgvector setup
 - Object storage setup
 - Basic admin config model
 
-### Phase 1: Document Intelligence
+### Phase 1: Document And Seed Lead Intelligence
 
 Deliverables:
 
 - PDF/DOCX/XLSX ingestion
+- CSV/XLSX seed lead import
 - Text extraction
+- Seed row normalization and validation
 - Chunking + embeddings
 - LLM-based ICP extraction
 - Human approval screen for extracted config
 
-### Phase 2: Source Registry And First Crawlers
+### Phase 2: Source Registry, Providers, And First Crawlers
 
 Start with safe, high-value sources:
 
@@ -1400,13 +1569,17 @@ Start with safe, high-value sources:
 - RSS/news feeds
 - trade show public pages where permitted
 - job/careers pages where permitted
+- search providers for permitted profile/domain discovery
+- licensed enrichment and email verification providers
 
 Deliverables:
 
 - source connector interface
+- provider connector interface
 - source config UI
 - crawl job scheduler
 - raw artifact store
+- search/profile artifact store
 
 ### Phase 3: Extraction And Scoring
 
@@ -1417,6 +1590,8 @@ Deliverables:
 - company extractor
 - title/contact candidate extractor
 - company resolver
+- seed lead company/domain resolver
+- profile candidate ranking
 - first scoring model
 - evidence-backed research notes
 
@@ -1425,9 +1600,11 @@ Deliverables:
 Deliverables:
 
 - licensed contact enrichment integration
+- email verification integration
 - CRM dedupe
 - contact verification status
 - title-group matching
+- manual follow-up state for missing or risky contact data
 
 ### Phase 5: Review And Export
 
@@ -1437,6 +1614,7 @@ Deliverables:
 - lead approval/rejection
 - weekly Excel export
 - CRM import mapping
+- outreach-ready export mapping
 - export audit log
 
 ### Phase 6: Feedback Learning
@@ -1446,6 +1624,7 @@ Deliverables:
 - feedback capture
 - scoring weight adjustment
 - source quality scoring
+- provider quality and deliverability scoring
 - query template refinement
 - lookalike profile generation
 
@@ -1531,6 +1710,9 @@ marketing-pipeline/
 - CRM import API: import contacts, companies, notes, and CRM records through the chosen CRM.
 - Marketplace API: use official marketplace or job-board APIs where permissions allow
 - Contact enrichment API: use the chosen licensed enrichment provider API
+- Search provider API: use approved search APIs for profile/domain candidate discovery
+- Email verification API: use the chosen licensed deliverability verification provider API
+- Outreach/marketing automation API: use the chosen campaign platform API only after review/export approval
 - Restricted source terms: use official APIs or approved imports for restricted sources
 - FTC CAN-SPAM compliance guide: https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business
 
@@ -2656,9 +2838,16 @@ Structured output schema:
       "title": "string",
       "role_relevance": "string",
       "evidence_url": "string",
+      "profile_candidate_url": "string",
+      "email_verification_status": "verified|risky|invalid|unknown|not_requested",
       "confidence": 0.0
     }
   ],
+  "seed_context": {
+    "seed_lead_row_id": "uuid or null",
+    "source": "string",
+    "project_context": "string"
+  },
   "score": {
     "account_fit": 0,
     "signal_strength": 0,
@@ -2746,9 +2935,11 @@ marketing-pipeline/
       expert_config/
     data_plane/
       ingestion/
+      seed_lead_import/
       discovery/
       artifact_processing/
       enrichment/
+      verification/
       embeddings/
       knowledge_graph/
       lead_intelligence/
@@ -2759,16 +2950,21 @@ marketing-pipeline/
       api_call/
       file_storage/
       web_search/
+      contact_enrichment/
+      email_verification/
+      outreach/
       database_import/
       manual_upload/
     workflows/
       seed_knowledge_flow.py
+      seed_lead_enrichment_flow.py
       discovery_flow.py
       artifact_processing_flow.py
       lead_intelligence_flow.py
     ai_graphs/
       document_extraction_graph.py
       discovery_planner_graph.py
+      profile_match_graph.py
       lead_extraction_graph.py
     review_ui/
   tests/
@@ -2780,21 +2976,24 @@ marketing-pipeline/
 ### 19.15 Revised End-To-End Flow
 
 ```text
-1. Customer docs and domain expert configuration are uploaded.
+1. Customer docs, domain expert configuration, and optional seed lead files are uploaded.
 2. Seed knowledge pipeline extracts, enriches, embeds, builds KG, and stores everything.
-3. Domain expert reviews and approves extracted ICP/config.
-4. Enabled plugins are loaded from the plugin registry.
-5. Discovery planner creates jobs only for relevant targets.
-6. Scrape/crawl plugins collect configured URLs if enabled.
-7. API plugins call configured APIs if enabled.
-8. File-storage plugins load configured files if enabled.
-9. Web-search plugins search and route discovered URLs if enabled.
-10. Raw artifacts are stored in bronze.
-11. Artifacts are cleaned, classified, filtered, and normalized into silver.
-12. Entities, signals, contacts, and relationships are extracted into gold.
-13. Embeddings and knowledge graph are updated.
-14. LLM lead intelligence runs over retrieved evidence, not raw dumps.
-15. Leads are scored, reviewed, exported, and fed back into future discovery.
+3. Seed lead import pipeline normalizes rows, validates required fields, and stores row-level errors.
+4. Domain expert reviews and approves extracted ICP/config, enrichment guardrails, and suppression rules.
+5. Enabled plugins are loaded from the plugin registry.
+6. Discovery planner creates jobs only for relevant targets.
+7. Seed enrichment planner creates profile/domain, provider enrichment, and verification jobs only for valid imported rows.
+8. Scrape/crawl plugins collect configured URLs if enabled.
+9. API plugins call configured APIs if enabled.
+10. File-storage plugins load configured files if enabled.
+11. Web-search plugins search and route discovered URLs/profile candidates if enabled.
+12. Licensed enrichment and verification plugins run only after policy allows them.
+13. Raw artifacts and provider results are stored in bronze.
+14. Artifacts are cleaned, classified, filtered, and normalized into silver.
+15. Entities, signals, contacts, profile candidates, verifications, and relationships are extracted into gold.
+16. Embeddings and knowledge graph are updated.
+17. LLM lead intelligence runs over retrieved evidence, not raw dumps.
+18. Leads are scored, reviewed, exported to CRM/outreach formats, and fed back into future discovery/enrichment.
 ```
 
 ## 20. First Build Recommendation
@@ -2816,7 +3015,21 @@ Upload tec5USA questionnaire
   -> weekly CRM-ready Excel
 ```
 
-This gives a controlled, explainable MVP. Once lead quality is proven, add more source connectors and automate more of the review/export loop.
+Add seed lead enrichment in the same MVP spine:
+
+```text
+Upload seed lead CSV/XLSX from Civcast/Dodge/CRM/event sheet
+  -> normalize first name, optional last name, company, source, and project context
+  -> expert-approved policy allows profile/domain search and provider use
+  -> rank profile/domain candidates with evidence
+  -> enrich contact through licensed provider
+  -> verify email deliverability
+  -> generate cited company/project research summary
+  -> review dashboard
+  -> outreach-ready CSV/XLSX and CRM-ready Excel
+```
+
+This gives a controlled, explainable MVP for both discovery-led account generation and imported seed lead enrichment. Once lead quality is proven, add more source connectors and automate more of the review/export loop.
 
 ## 21. Blueprint v2: Next-Gen Innovation Layer
 
@@ -3202,12 +3415,12 @@ Recommended implementation sequence:
 E00 Foundation
   -> E01 Database And Data Contracts
   -> E02 API And Control Plane
-  -> E03 Document Ingestion
+  -> E03 Document And Seed Lead Ingestion
   -> E04 Expert Config Review
   -> E05 Source Registry And Policy
-  -> E06 Crawling And Raw Artifact Store
+  -> E06 Crawling, Search, And Raw Artifact Store
   -> E07 Authenticated Crawling And HITL
-  -> E08 Classification And Extraction
+  -> E08 Classification, Extraction, And Enrichment
   -> E09 Resolution, Scoring, Review, Export
   -> E10 Observability, Security, QA
   -> E11 v2 Innovation Layer
@@ -3220,15 +3433,15 @@ E00 Foundation
 | E00 | Foundation And Repo Setup | P0 | none | Runnable project skeleton |
 | E01 | Database And Data Contracts | P0 | E00 | Core schema and migrations |
 | E02 | API And Control Plane | P0 | E01 | Admin/config APIs |
-| E03 | Document Ingestion | P0 | E01, E02 | Client docs parsed and stored |
-| E04 | Expert Config Review | P0 | E03 | Human-approved ICP config |
-| E05 | Source Registry And Policy | P0 | E02, E04 | Configured crawl/API sources |
-| E06 | Crawl And Raw Collection | P0 | E05 | Public crawl artifacts stored |
+| E03 | Document And Seed Lead Ingestion | P0 | E01, E02 | Client docs parsed and seed lead rows normalized |
+| E04 | Expert Config Review | P0 | E03 | Human-approved ICP and enrichment guardrails |
+| E05 | Source Registry And Policy | P0 | E02, E04 | Configured crawl/API/search/provider/outreach sources |
+| E06 | Crawl And Raw Collection | P0 | E05 | Public crawl and permitted search/profile artifacts stored |
 | E07 | Authenticated Crawl And HITL | P1 | E05, E06 | Server-safe auth recovery |
-| E08 | Classification And Extraction | P0 | E03, E06 | Entities, signals, evidence |
-| E09 | Resolution, Scoring, Review, Export | P0 | E08 | Weekly CRM-ready output |
-| E10 | Observability, Security, QA | P1 | E00-E09 | Production guardrails |
-| E11 | v2 Innovation Layer | P2 | E09, E10 | Hypothesis/ROI/temporal intelligence |
+| E08 | Classification, Extraction, And Enrichment | P0 | E03, E06 | Entities, signals, profile matches, verifications, evidence |
+| E09 | Resolution, Scoring, Review, Export | P0 | E08 | Weekly CRM-ready and outreach-ready output |
+| E10 | Observability, Security, QA | P1 | E00-E09 | Production guardrails and enrichment quality metrics |
+| E11 | v2 Innovation Layer | P2 | E09, E10 | Hypothesis/ROI/temporal/campaign intelligence |
 
 ### 22.3 Definition Of Done For MVP
 
@@ -3236,14 +3449,16 @@ The MVP is complete when:
 
 - A client workspace can be created.
 - Documents can be uploaded, parsed, chunked, embedded, and cited.
+- Seed lead files can be uploaded, normalized, validated, deduped, and suppression-checked.
 - Extracted ICP suggestions can be reviewed and approved by a human.
 - At least 3 safe public sources can be configured and crawled.
+- Search, enrichment, verification, and outreach provider policies can be configured with mock adapters.
 - Raw artifacts are stored with metadata and source lineage.
 - Pages are classified before expensive extraction.
-- Companies, signals, contacts, and evidence are extracted into structured tables.
+- Companies, signals, contacts, profile candidates, verifications, and evidence are extracted into structured tables.
 - Leads are scored with explanation and confidence.
 - A human can approve/reject leads.
-- Weekly XLSX/CSV export is generated with audit trail.
+- Weekly CRM XLSX/CSV and seed-enrichment outreach-ready XLSX/CSV exports are generated with audit trail.
 
 ### 22.4 E00 Foundation And Repo Setup
 
@@ -3262,11 +3477,12 @@ The MVP is complete when:
 | E01-T01 | Configure SQLAlchemy and Alembic | P0 | E00-T02 | DB session and migrations | Migration command runs locally |
 | E01-T02 | Create tenant/workspace tables | P0 | E01-T01 | `clients`, `client_users`, `client_settings` | CRUD verified by tests |
 | E01-T03 | Create document knowledge tables | P0 | E01-T01 | `documents`, `document_pages`, `document_chunks`, `extracted_knowledge_items` | Upload metadata and chunks can be persisted |
-| E01-T04 | Create active ICP config tables | P0 | E01-T01 | Products, industries, titles, signals, exclusions | Approved config can be versioned |
-| E01-T05 | Create source/crawl tables | P0 | E01-T01 | `source_connectors`, `url_candidates`, `crawl_jobs`, `crawl_artifacts` | Crawl jobs and artifacts have lineage |
-| E01-T06 | Create extraction/lead tables | P0 | E01-T01 | Classifications, candidates, signals, review, export | Lead lifecycle can be represented |
-| E01-T07 | Add pgvector support | P0 | E01-T01 | Vector extension and embedding columns | Similarity query works in test |
-| E01-T08 | Add schema contract tests | P1 | E01-T02, E01-T03, E01-T04, E01-T05, E01-T06, E01-T07 | Migration validation tests | Fresh DB migrates from empty state |
+| E01-T04 | Create seed lead import tables | P0 | E01-T01 | `lead_import_batches`, `seed_lead_rows` | Imported rows preserve original/normalized values and validation state |
+| E01-T05 | Create active ICP config tables | P0 | E01-T01 | Products, industries, titles, signals, exclusions, enrichment guardrails | Approved config can be versioned |
+| E01-T06 | Create source/crawl/provider tables | P0 | E01-T01 | `source_connectors`, `url_candidates`, `crawl_jobs`, `crawl_artifacts` | Crawl/search/provider jobs and artifacts have lineage |
+| E01-T07 | Create extraction/lead tables | P0 | E01-T01 | Classifications, candidates, signals, profile candidates, verifications, review, export | Lead lifecycle can be represented |
+| E01-T08 | Add pgvector support | P0 | E01-T01 | Vector extension and embedding columns | Similarity query works in test |
+| E01-T09 | Add schema contract tests | P1 | E01-T02, E01-T03, E01-T04, E01-T05, E01-T06, E01-T07, E01-T08 | Migration validation tests | Fresh DB migrates from empty state |
 
 ### 22.6 E02 API And Control Plane
 
@@ -3274,12 +3490,12 @@ The MVP is complete when:
 |---|---|---:|---|---|---|
 | E02-T01 | Create FastAPI app shell | P0 | E00-T02, E01-T01 | App, health endpoint, DB dependency | `/health` returns OK |
 | E02-T02 | Add client workspace APIs | P0 | E01-T02, E02-T01 | Client CRUD routes | Workspace can be created and listed |
-| E02-T03 | Add source connector APIs | P0 | E01-T05, E02-T01 | Source CRUD routes | Source config validates against schema |
-| E02-T04 | Add active ICP config APIs | P0 | E01-T04, E02-T01 | Products, titles, signals, exclusions APIs | Config can be edited and activated |
-| E02-T05 | Add run/job status APIs | P0 | E01-T05, E02-T01 | Pipeline run/job endpoints | UI can poll job state |
+| E02-T03 | Add source/provider connector APIs | P0 | E01-T06, E02-T01 | Source/provider CRUD routes | Source, search, enrichment, verification, and outreach config validates against schema |
+| E02-T04 | Add active ICP config APIs | P0 | E01-T05, E02-T01 | Products, titles, signals, exclusions APIs | Config can be edited and activated |
+| E02-T05 | Add run/job status APIs | P0 | E01-T06, E02-T01 | Pipeline run/job endpoints | UI can poll job state |
 | E02-T06 | Add RBAC placeholders | P1 | E02-T01 | Role-based route guards | Admin/reviewer roles enforced in tests |
 
-### 22.7 E03 Document Ingestion
+### 22.7 E03 Document And Seed Lead Ingestion
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
@@ -3287,29 +3503,34 @@ The MVP is complete when:
 | E03-T02 | Store original files in object store | P0 | E03-T01 | Storage adapter | File can be retrieved by storage URL |
 | E03-T03 | Parse PDF/DOCX/TXT | P0 | E03-T02 | Text extraction service | Extracted text is stored with page metadata |
 | E03-T04 | Parse CSV/XLSX | P0 | E03-T02 | Tabular ingestion service | Rows and sheet metadata are captured |
-| E03-T05 | Chunk and embed documents | P0 | E03-T03, E03-T04, E01-T07 | Chunking and embedding worker | Chunks include metadata and embeddings |
-| E03-T06 | Extract ICP suggestions with schema | P0 | E03-T05 | Pydantic extraction schemas | Outputs include evidence and confidence |
-| E03-T07 | Add ingestion workflow | P0 | E03-T01, E03-T02, E03-T03, E03-T04, E03-T05, E03-T06 | Prefect flow | Upload triggers parse/chunk/extract pipeline |
+| E03-T05 | Add seed lead import schemas | P0 | E01-T04, E03-T04 | Pydantic schemas for imported rows | First name, company, source, optional last name, title, location, note, and campaign hint validate |
+| E03-T06 | Normalize and validate seed lead rows | P0 | E03-T05 | Row normalization service | Original/normalized values, row errors, dedupe, and suppression state are stored |
+| E03-T07 | Chunk and embed documents | P0 | E03-T03, E03-T04, E01-T08 | Chunking and embedding worker | Chunks include metadata and embeddings |
+| E03-T08 | Extract ICP suggestions with schema | P0 | E03-T07 | Pydantic extraction schemas | Outputs include evidence and confidence |
+| E03-T09 | Add document and lead import workflows | P0 | E03-T01, E03-T02, E03-T03, E03-T04, E03-T06, E03-T07, E03-T08 | Prefect flows | Upload triggers parse/chunk/extract or seed row normalization pipeline |
 
 ### 22.8 E04 Expert Config Review
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
-| E04-T01 | Create review queue table/API | P0 | E01-T06, E02-T01 | Review items endpoint | Suggested ICP items can enter review |
+| E04-T01 | Create review queue table/API | P0 | E01-T07, E02-T01 | Review items endpoint | Suggested ICP items can enter review |
 | E04-T02 | Build MVP review UI | P0 | E04-T01 | Streamlit or Next.js screen | Reviewer can approve/reject/edit suggestions |
-| E04-T03 | Apply approved config | P0 | E04-T02, E01-T04 | Approval service | Approved items become active config |
+| E04-T03 | Apply approved config | P0 | E04-T02, E01-T05 | Approval service | Approved items become active config |
 | E04-T04 | Add config audit log | P1 | E04-T03 | Audit records | Every config change has actor/time/source |
 | E04-T05 | Add suppression list UI/API | P1 | E02-T04 | Suppression management | Export respects suppression rules |
+| E04-T06 | Add enrichment/outreach guardrails | P1 | E04-T03 | Guardrail config and review controls | Profile search, provider use, verification threshold, and outreach export require approval |
 
 ### 22.9 E05 Source Registry And Policy
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
-| E05-T01 | Implement source policy model | P0 | E01-T05 | Policy decision service | URLs map to allow/block/review/API-only |
+| E05-T01 | Implement source/provider policy model | P0 | E01-T06 | Policy decision service | URLs and provider operations map to allow/block/review/API-only |
 | E05-T02 | Implement connector registry | P0 | E02-T03 | Registry abstraction | Connector class resolves by config |
 | E05-T03 | Add URL candidate pipeline | P0 | E05-T01 | Candidate storage and routing | Search results are stored before fetch |
 | E05-T04 | Add search provider interface | P1 | E05-T03 | Search provider protocol | Mock provider emits candidates in tests |
 | E05-T05 | Add policy admin controls | P1 | E02-T03, E05-T01 | UI/API for policy rules | Admin can set source-specific policies |
+| E05-T06 | Add enrichment, verification, and outreach provider interfaces | P1 | E05-T02, E04-T06 | Provider protocols and mock adapters | Provider calls are blocked without approved policy and credentials |
+| E05-T07 | Add seed profile search routing | P1 | E05-T03, E03-T06 | Seed row profile candidate routing | Restricted profile candidates are stored and routed through policy before use |
 
 ### 22.10 E06 Crawl And Raw Collection
 
@@ -3322,12 +3543,13 @@ The MVP is complete when:
 | E06-T05 | Add robots/rate-limit enforcement | P0 | E05-T01, E06-T02 | Crawl guards | Tests verify blocked and throttled URLs |
 | E06-T06 | Add recrawl/content hash dedupe | P1 | E06-T04 | Dedupe service | Unchanged content is not reprocessed |
 | E06-T07 | Add dead-letter handling | P1 | E06-T02 | Failed job preservation | Failed jobs keep error and retry metadata |
+| E06-T08 | Add search/profile artifact capture | P1 | E05-T07, E06-T04 | Search result/profile evidence storage | Seed row profile evidence links to policy decision and source artifact |
 
 ### 22.11 E07 Authenticated Crawl And HITL
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
-| E07-T01 | Create credential profile schema | P1 | E01-T05 | Credential refs and auth strategy fields | Secrets are referenced, not stored in config |
+| E07-T01 | Create credential profile schema | P1 | E01-T06 | Credential refs and auth strategy fields | Secrets are referenced, not stored in config |
 | E07-T02 | Add encrypted secret adapter | P1 | E07-T01 | Local/dev secret storage interface | Secrets are redacted from logs |
 | E07-T03 | Implement Playwright storage-state login | P1 | E07-T02, E06-T03 | Authenticated browser session manager | Session state can be saved and reused |
 | E07-T04 | Add session validation job | P1 | E07-T03 | Auth healthcheck worker | Expired sessions are detected before crawl |
@@ -3335,43 +3557,52 @@ The MVP is complete when:
 | E07-T06 | Build manual re-auth UI flow | P1 | E07-T05 | Secure re-auth screen/session handoff | Operator can refresh session without exposing secrets |
 | E07-T07 | Add CAPTCHA/MFA policy guard | P1 | E07-T05 | Policy enforcement | CAPTCHA-heavy source routes to HITL by default |
 | E07-T08 | Add optional solver interface | P2 | E07-T07 | Disabled-by-default adapter | Solver can only run for approved source policy |
+| E07-T09 | Add authenticated operation scopes | P1 | E07-T01, E05-T01 | Credential operation scope model | Credentials approved for crawl cannot be reused for enrichment/outreach unless explicitly allowed |
 
 ### 22.12 E08 Classification, Extraction, And Knowledge Graph
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
 | E08-T01 | Implement page classifier rules | P0 | E06-T04 | Rule-based page classifier | Common page types are classified |
-| E08-T02 | Add LLM fallback classifier | P0 | E08-T01, E03-T06 | Ollama/provider adapter classifier | Ambiguous pages produce typed labels |
+| E08-T02 | Add LLM fallback classifier | P0 | E08-T01, E03-T08 | Ollama/provider adapter classifier | Ambiguous pages produce typed labels |
 | E08-T03 | Implement entity extraction schemas | P0 | E08-T02 | Company/contact/signal schemas | Extraction requires evidence URL/text |
 | E08-T04 | Build extraction workflow | P0 | E08-T03 | Artifact-to-entities flow | Raw artifact produces normalized candidates |
-| E08-T05 | Add knowledge graph tables/services | P1 | E01-T06, E08-T04 | `kg_nodes`, `kg_edges` services | Entities link to evidence artifacts |
-| E08-T06 | Add retrieval service | P0 | E03-T05, E08-T04 | Seed/evidence retrieval | Lead context pulls relevant chunks/evidence |
+| E08-T05 | Add knowledge graph tables/services | P1 | E01-T07, E08-T04 | `kg_nodes`, `kg_edges` services | Entities link to evidence artifacts |
+| E08-T06 | Add retrieval service | P0 | E03-T07, E08-T04 | Seed/evidence retrieval | Lead context pulls relevant chunks/evidence |
 | E08-T07 | Add extraction golden tests | P1 | E08-T03 | Fixture-based regression tests | Schema quality is tested on sample artifacts |
+| E08-T08 | Add seed company/domain resolver | P0 | E03-T06, E08-T04 | Seed row to company/domain resolver | Imported rows resolve to canonical company/domain candidates with confidence |
+| E08-T09 | Add profile candidate ranker | P0 | E06-T08, E08-T08 | Profile/domain ranking service | Candidate ranking uses company, title, location, and source evidence |
+| E08-T10 | Add contact enrichment adapter workflow | P1 | E05-T06, E08-T09 | Mock provider enrichment workflow | Provider results produce typed contact/email candidates with provenance |
+| E08-T11 | Add email verification workflow | P1 | E05-T06, E08-T10 | Mock verification workflow | Verification status gates outreach eligibility |
+| E08-T12 | Add cited research summary generation | P1 | E08-T06, E08-T08 | Summary service | Summary uses stored evidence and never uncited claims |
 
 ### 22.13 E09 Resolution, Scoring, Review, Export
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
 | E09-T01 | Implement company resolver | P0 | E08-T04 | Domain/name/fuzzy matching service | Duplicate company candidates merge correctly |
-| E09-T02 | Implement contact candidate resolver | P0 | E08-T04 | Contact dedupe/title mapping | Contact roles map to target title groups |
-| E09-T03 | Implement rule-based lead scorer | P0 | E09-T01, E09-T02, E08-T06 | Score breakdown service | Score includes fit/signal/contact/evidence factors |
+| E09-T02 | Implement contact candidate resolver | P0 | E08-T04, E08-T10 | Contact dedupe/title mapping | Contact roles map to target title groups and provider identities dedupe |
+| E09-T03 | Implement rule-based lead scorer | P0 | E09-T01, E09-T02, E08-T06, E08-T11 | Score breakdown service | Score includes fit/signal/contact/profile/email/evidence factors |
 | E09-T04 | Add LLM scoring rationale | P0 | E09-T03 | Evidence-grounded explanation | Rationale contains citations and confidence |
 | E09-T05 | Build lead review UI | P0 | E09-T03, E04-T01 | Approve/reject/edit screen | Reviewer can process lead queue |
-| E09-T06 | Add export batch builder | P0 | E09-T05 | XLSX/CSV export service | Approved leads export with required columns |
+| E09-T06 | Add export batch builder | P0 | E09-T05 | XLSX/CSV export service | Approved leads export with required CRM and outreach columns |
 | E09-T07 | Add export audit log | P0 | E09-T06 | Export lineage records | Every row links to lead/evidence/reviewer |
 | E09-T08 | Add feedback capture | P1 | E09-T05 | Review feedback tables/API | Rejection reasons feed future scoring |
+| E09-T09 | Add outreach export profile | P1 | E09-T06, E08-T11 | Outreach CSV/XLSX mapping | Only approved, verified, non-suppressed leads export to outreach format |
+| E09-T10 | Add manual follow-up states | P1 | E09-T05 | Review states and filters | Missing-email, low-confidence profile, and risky-verification rows are actionable |
 
 ### 22.14 E10 Observability, Security, QA
 
 | Ticket | Title | Priority | Depends On | Deliverable | Acceptance Criteria |
 |---|---|---:|---|---|---|
 | E10-T01 | Add OpenTelemetry tracing | P1 | E02-T01 | Trace instrumentation | Runs show trace IDs across API/workers |
-| E10-T02 | Add Prometheus metrics | P1 | E06-T02, E08-T04, E09-T03 | Metrics endpoints/dashboards | Pages, errors, costs, leads are tracked |
+| E10-T02 | Add Prometheus metrics | P1 | E06-T02, E08-T04, E09-T03 | Metrics endpoints/dashboards | Pages, errors, costs, leads, provider quality, verification, and bounce rates are tracked |
 | E10-T03 | Add structured audit logs | P1 | E04-T04, E09-T07 | Audit logging service | Config/export/auth events are searchable |
 | E10-T04 | Add LLM cost/token tracking | P1 | E08-T02, E09-T04 | Model invocation log | Provider/model/tokens/cost/confidence stored |
 | E10-T05 | Add compliance export simulation | P1 | E09-T06 | Pre-export policy check | Blocked rows include reasons |
-| E10-T06 | Add end-to-end MVP test | P1 | E03-T07, E04-T03, E06-T05, E08-T06, E09-T07 | Test fixture run | Sample docs -> crawl -> extract -> score -> export passes |
+| E10-T06 | Add end-to-end MVP test | P1 | E03-T09, E04-T03, E06-T05, E08-T06, E09-T07 | Test fixture run | Sample docs -> crawl -> extract -> score -> export passes |
 | E10-T07 | Add backup/retention policy | P2 | E01-T01, E06-T04 | Data lifecycle config | Retention/deletion workflow documented and tested |
+| E10-T08 | Add seed enrichment E2E test | P1 | E03-T09, E04-T06, E05-T06, E08-T11, E09-T09 | Test fixture run | Seed lead import -> profile match -> enrichment -> verification -> review -> outreach export passes |
 
 ### 22.15 E11 v2 Innovation Layer
 
@@ -3390,35 +3621,38 @@ The MVP is complete when:
 | E11-T11 | Add CRM outcome ingestion | P2 | E09-T07 | Outcome import service | Reply/meeting/opportunity/win events attach to leads |
 | E11-T12 | Add revenue-aware learning loop | P3 | E11-T11, E11-T04 | Scoring adjustment workflow | Scoring weights update through approved policy |
 | E11-T13 | Add mode-based strategy controller | P3 | E11-T02, E11-T04, E11-T10 | Coverage/precision/campaign/account modes | Mode changes planner thresholds and review strictness |
+| E11-T14 | Add outreach integration connector | P2 | E09-T09 | Outreach sandbox connector | Campaign/inbox payload sync works in sandbox |
+| E11-T15 | Add engagement outcome ingestion | P2 | E11-T14 | Engagement import service | Sent, opened, replied, bounced, unsubscribed events attach to leads |
+| E11-T16 | Add provider quality learning loop | P3 | E11-T15, E11-T04 | Provider/source quality workflow | Provider and verification weights update through approved policy |
 
 ### 22.16 First Four Sprint Plan
 
 Sprint 1: Foundation and schema
 
 - E00-T01, E00-T02, E00-T03
-- E01-T01, E01-T02, E01-T03, E01-T04, E01-T07
+- E01-T01, E01-T02, E01-T03, E01-T04, E01-T05, E01-T08
 - E02-T01, E02-T02
 
-Sprint 2: Document intelligence and config review
+Sprint 2: Document intelligence, seed lead import, and config review
+
+- E01-T07, E01-T09
+- E03-T01, E03-T02, E03-T03, E03-T04, E03-T05, E03-T06
+- E03-T07, E03-T08, E03-T09
+- E04-T01, E04-T02, E04-T03, E04-T05, E04-T06
+
+Sprint 3: Source/provider registry and public/search crawl
 
 - E01-T06
-- E03-T01, E03-T02, E03-T03, E03-T04, E03-T05
-- E03-T06, E03-T07
-- E04-T01, E04-T02, E04-T03
-
-Sprint 3: Source registry and public crawl
-
-- E01-T05
 - E02-T03, E02-T04, E02-T05
-- E05-T01, E05-T02, E05-T03
-- E06-T01, E06-T02, E06-T03, E06-T04, E06-T05
+- E05-T01, E05-T02, E05-T03, E05-T04, E05-T06, E05-T07
+- E06-T01, E06-T02, E06-T03, E06-T04, E06-T05, E06-T08
 
-Sprint 4: Extraction, scoring, review, export
+Sprint 4: Extraction, enrichment, scoring, review, export
 
-- E08-T01, E08-T02, E08-T03, E08-T04, E08-T06
+- E08-T01, E08-T02, E08-T03, E08-T04, E08-T06, E08-T08, E08-T09, E08-T10, E08-T11
 - E09-T01, E09-T02, E09-T03, E09-T04
-- E09-T05, E09-T06, E09-T07
-- E10-T06
+- E09-T05, E09-T06, E09-T07, E09-T09, E09-T10
+- E10-T06, E10-T08
 
 ### 22.17 Immediate Engineering Starting Point
 
@@ -4138,6 +4372,13 @@ Document and RAG tables:
 | `document_chunks` | `id uuid pk`, `client_id uuid fk`, `document_id uuid fk`, `chunk_index int`, `content text`, `embedding vector`, `metadata_json jsonb`, `created_at timestamptz` | unique `(document_id, chunk_index)`, vector index on `embedding`, index `(client_id, document_id)` |
 | `extracted_knowledge_items` | `id uuid pk`, `client_id uuid fk`, `document_id uuid fk`, `item_type text`, `name text`, `value_json jsonb`, `evidence_text text`, `confidence numeric`, `status text`, `created_at timestamptz` | index `(client_id, item_type, status)` |
 
+Seed lead import tables:
+
+| Table | Columns | Constraints And Indexes |
+|---|---|---|
+| `lead_import_batches` | `id uuid pk`, `client_id uuid fk`, `source_name text`, `source_type text`, `filename text`, `storage_url text`, `status text`, `row_count int`, `valid_row_count int`, `uploaded_by uuid`, `created_at timestamptz` | index `(client_id, status, created_at)` |
+| `seed_lead_rows` | `id uuid pk`, `client_id uuid fk`, `lead_import_batch_id uuid fk`, `row_number int`, `first_name text`, `last_name text`, `company_name text`, `source text`, `title text`, `location text`, `project_context text`, `source_record_id text`, `campaign_hint text`, `normalized_json jsonb`, `validation_errors_json jsonb`, `dedupe_key text`, `suppression_status text`, `status text`, `created_at timestamptz` | unique `(lead_import_batch_id, row_number)`, index `(client_id, status)`, index `(client_id, dedupe_key)` |
+
 Source and crawl tables:
 
 | Table | Columns | Constraints And Indexes |
@@ -4156,7 +4397,10 @@ Extraction, lead, and export tables:
 | `company_candidates` | `id uuid pk`, `client_id uuid fk`, `canonical_name text`, `website text`, `industry text`, `subsegment text`, `confidence numeric`, `source_artifact_id uuid`, `status text` | unique `(client_id, website)`, index `(client_id, canonical_name)` |
 | `account_signals` | `id uuid pk`, `client_id uuid fk`, `company_candidate_id uuid fk`, `signal_type text`, `summary text`, `observed_at timestamptz`, `evidence_artifact_id uuid`, `confidence numeric` | index `(client_id, signal_type, observed_at)` |
 | `contact_candidates` | `id uuid pk`, `client_id uuid fk`, `company_candidate_id uuid fk`, `name text`, `title text`, `title_group text`, `email_hash text`, `phone_hash text`, `evidence_artifact_id uuid`, `confidence numeric`, `status text` | index `(client_id, company_candidate_id, title_group)` |
-| `lead_candidates` | `id uuid pk`, `client_id uuid fk`, `company_candidate_id uuid fk`, `primary_contact_id uuid`, `score_total int`, `score_json jsonb`, `confidence numeric`, `status text`, `created_at timestamptz` | index `(client_id, status, score_total desc)` |
+| `profile_candidates` | `id uuid pk`, `client_id uuid fk`, `seed_lead_row_id uuid fk`, `company_candidate_id uuid fk`, `profile_url text`, `profile_source text`, `display_name text`, `title text`, `location text`, `ranking_score numeric`, `evidence_artifact_id uuid`, `rank_reason_json jsonb`, `status text`, `created_at timestamptz` | unique `(client_id, seed_lead_row_id, profile_url)`, index `(client_id, seed_lead_row_id, ranking_score desc)` |
+| `email_enrichment_results` | `id uuid pk`, `client_id uuid fk`, `contact_candidate_id uuid fk`, `profile_candidate_id uuid fk`, `provider_name text`, `provider_record_id text`, `email_hash text`, `phone_hash text`, `confidence numeric`, `provenance_json jsonb`, `status text`, `created_at timestamptz` | index `(client_id, provider_name, status)`, index `(client_id, contact_candidate_id)` |
+| `email_verifications` | `id uuid pk`, `client_id uuid fk`, `email_enrichment_result_id uuid fk`, `provider_name text`, `verification_status text`, `risk_score numeric`, `checked_at timestamptz`, `raw_status_json jsonb` | index `(client_id, verification_status, checked_at)` |
+| `lead_candidates` | `id uuid pk`, `client_id uuid fk`, `origin_type text`, `seed_lead_row_id uuid`, `company_candidate_id uuid fk`, `primary_contact_id uuid`, `primary_profile_candidate_id uuid`, `score_total int`, `score_json jsonb`, `confidence numeric`, `status text`, `created_at timestamptz` | index `(client_id, status, score_total desc)`, index `(client_id, origin_type)` |
 | `review_items` | `id uuid pk`, `client_id uuid fk`, `entity_type text`, `entity_id uuid`, `queue text`, `priority_score numeric`, `status text`, `assigned_to uuid`, `created_at timestamptz`, `resolved_at timestamptz` | index `(client_id, queue, status, priority_score desc)` |
 | `export_batches` | `id uuid pk`, `client_id uuid fk`, `export_type text`, `status text`, `created_by uuid`, `created_at timestamptz`, `approved_at timestamptz` | index `(client_id, status, created_at)` |
 | `export_batch_items` | `id uuid pk`, `export_batch_id uuid fk`, `lead_candidate_id uuid fk`, `exported_payload_json jsonb`, `status text`, `blocked_reason text` | unique `(export_batch_id, lead_candidate_id)` |
@@ -4392,26 +4636,29 @@ Initial source priority list:
 
 | Rank | Source Type | Why It Matters | Preferred Method |
 |---:|---|---|---|
-| 1 | Client documents and CRM exports | Highest signal and permission clarity | upload/import |
-| 2 | Company news/press pages | Expansion, launches, facilities | permitted crawl/RSS |
-| 3 | Company careers pages | Hiring signals and target titles | permitted crawl |
-| 4 | RSS/news feeds | Recency and broad coverage | RSS/API |
-| 5 | Trade show exhibitor pages | Account discovery | API/export/permitted crawl |
-| 6 | Industry associations | Qualified account lists | API/export/permitted crawl |
-| 7 | Public SEC/company filings | CapEx, M&A, facility context | official feeds |
-| 8 | Government public data portals | Facility/project signals | official feeds |
-| 9 | Job boards | Hiring velocity | API/licensed export preferred |
-| 10 | Marketplace/directories | Vendor/account discovery | API/export preferred |
-| 11 | CRM historical opportunities | Outcome learning | CRM connector |
-| 12 | Email campaign engagement | Feedback loop | marketing automation connector |
-| 13 | Contact enrichment providers | Verified emails/phones | licensed API |
-| 14 | Patent/public research databases | R&D/technology signals | official API |
-| 15 | Conference agendas/speakers | Buyer/contact signals | permitted crawl/export |
-| 16 | Investor relations pages | CapEx and strategy | crawl/RSS |
-| 17 | Local economic development announcements | New plant/facility signals | public feeds |
-| 18 | Press release wires | Timely announcements | API/RSS |
-| 19 | Forums/communities | Weak qualitative signals | official API/permitted public pages |
-| 20 | Authenticated client portals | Proprietary high-value data | scoped connector + HITL |
+| 1 | Client documents, seed lead lists, and CRM exports | Highest signal and permission clarity | upload/import |
+| 2 | Bid/platform lead exports | Seed enrichment starting point with project context | approved export/API/import |
+| 3 | Company news/press pages | Expansion, launches, facilities | permitted crawl/RSS |
+| 4 | Company careers pages | Hiring signals and target titles | permitted crawl |
+| 5 | Search providers | Profile/domain candidate discovery | official search API/configured provider |
+| 6 | RSS/news feeds | Recency and broad coverage | RSS/API |
+| 7 | Trade show exhibitor pages | Account discovery | API/export/permitted crawl |
+| 8 | Industry associations | Qualified account lists | API/export/permitted crawl |
+| 9 | Public SEC/company filings | CapEx, M&A, facility context | official feeds |
+| 10 | Government public data portals | Facility/project signals | official feeds |
+| 11 | Job boards | Hiring velocity | API/licensed export preferred |
+| 12 | Marketplace/directories | Vendor/account discovery | API/export preferred |
+| 13 | CRM historical opportunities | Outcome learning | CRM connector |
+| 14 | Email campaign engagement | Feedback loop and deliverability | marketing automation connector |
+| 15 | Contact enrichment providers | Verified emails/phones | licensed API |
+| 16 | Email verification providers | Deliverability and bounce prevention | licensed API |
+| 17 | Patent/public research databases | R&D/technology signals | official API |
+| 18 | Conference agendas/speakers | Buyer/contact signals | permitted crawl/export |
+| 19 | Investor relations pages | CapEx and strategy | crawl/RSS |
+| 20 | Local economic development announcements | New plant/facility signals | public feeds |
+| 21 | Press release wires | Timely announcements | API/RSS |
+| 22 | Forums/communities | Weak qualitative signals | official API/permitted public pages |
+| 23 | Authenticated client portals | Proprietary high-value data | scoped connector + HITL |
 
 ### 25.9 Sales And Outreach Integration Strategy
 
@@ -4421,27 +4668,36 @@ CRM object mapping:
 |---|---|
 | `company_candidate` | Account/company |
 | `contact_candidate` | Contact/lead |
+| `profile_candidate` | Contact profile or enrichment evidence |
 | `account_signal` | Note/task/custom signal object |
 | `lead_candidate` | Lead/opportunity candidate |
 | `export_batch` | Campaign/import batch |
+| `lead_import_batch` | Source campaign/list/import batch |
 
 Required sync fields:
 
 - source system ID
 - client ID
 - company domain
+- seed import batch and source row ID when applicable
 - contact email hash or verified email
+- email verification status and checked timestamp
 - title and title group
 - score band
 - evidence URL
 - fit reason
+- research/personalization note
+- outreach inbox or campaign assignment when applicable
 - export batch ID
 - suppression status
 
 Feedback sync:
 
+- sent
+- opened
 - bounced
 - replied
+- unsubscribed
 - meeting booked
 - opportunity created
 - opportunity won/lost
@@ -4462,6 +4718,8 @@ Gold dataset requirements:
 - At least 50 document chunks for ICP extraction.
 - At least 200 page artifacts across page types.
 - At least 100 company/signal examples.
+- At least 100 seed lead rows with known profile/domain outcomes.
+- At least 100 provider/verification fixture rows including invalid, risky, and unknown statuses.
 - At least 100 lead scoring examples.
 - Include negative/exclusion examples.
 - Include stale, duplicate, noisy, and ambiguous evidence.

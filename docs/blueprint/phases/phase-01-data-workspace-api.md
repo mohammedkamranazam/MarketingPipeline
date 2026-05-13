@@ -9,7 +9,7 @@
 
 ## Goal
 
-Add the database foundation and a persistent client workspace API.
+Add the database foundation and a persistent client workspace API that can hold both discovery-led and seed-lead-enrichment settings.
 
 ## Usable Outcome
 
@@ -21,6 +21,7 @@ A developer can create, list, fetch, and update client workspaces through the AP
 - Alembic migration framework.
 - Core tenant tables.
 - Client workspace API.
+- Workspace settings for use-case modes, export preferences, and default enrichment guardrails.
 - Migration and API tests.
 
 ## Steps
@@ -32,7 +33,7 @@ A developer can create, list, fetch, and update client workspaces through the AP
 | P01-T03 Configure Alembic | Ready | 0% | `alembic upgrade head` works |
 | P01-T04 Create `clients` table | Ready | 0% | migration test |
 | P01-T05 Create `client_users` table | Ready | 0% | migration test |
-| P01-T06 Create `client_settings` table | Ready | 0% | migration test |
+| P01-T06 Create `client_settings` table | Ready | 0% | migration test includes discovery/enrichment/export settings keys |
 | P01-T07 Add Pydantic client schemas | Ready | 0% | schema unit tests |
 | P01-T08 Add `/clients` create/list/get/update APIs | Ready | 0% | API tests |
 | P01-T09 Add seed sample client command | Ready | 0% | seed creates tec5USA client |
@@ -44,6 +45,7 @@ A developer can create, list, fetch, and update client workspaces through the AP
 - Migration test against empty database.
 - API tests for client CRUD.
 - Verify all queries are scoped by `client_id` where applicable.
+- Verify client settings can represent enabled use-case lanes, export defaults, and contact enrichment defaults without schema drift.
 
 ## Exit Criteria
 
@@ -54,4 +56,4 @@ A developer can create, list, fetch, and update client workspaces through the AP
 
 ## Handoff To Phase 02
 
-Phase 02 can attach document records and uploads to a real `client_id`.
+Phase 02 can attach document records, seed lead imports, and upload metadata to a real `client_id`.
