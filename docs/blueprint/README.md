@@ -31,6 +31,7 @@ Both lanes must preserve source policy, typed contracts, tenant isolation, human
 | [02-development-standards.md](02-development-standards.md) | Engineering rules, testing, CI/CD, security |
 | [03-product-governance.md](03-product-governance.md) | Product workflows, governance, SLOs, risks |
 | [04-data-api-events.md](04-data-api-events.md) | Data, API, event, and worker contracts |
+| [frontend.md](frontend.md) | React, daisyUI, page, component, service, and frontend phase roadmap |
 | [phases/](phases/) | Executable phase plans |
 
 ## Status Values

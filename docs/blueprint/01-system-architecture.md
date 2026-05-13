@@ -53,17 +53,50 @@ client docs + expert config        seed lead imports
 | Layer | Default |
 |---|---|
 | API | FastAPI |
-| Workflow orchestration | Prefect |
-| AI graph/state | LangGraph |
+| Workflow orchestration | Prefect first, with a Temporal evaluation gate before Production v1 |
+| AI graph/state | LangGraph with durable checkpoints, bounded iterations, and human-in-loop recovery |
 | Database | PostgreSQL |
 | Vector search | pgvector first, Qdrant later if needed |
 | Queue/cache | Redis |
-| Crawling | Scrapy, httpx, Playwright, scrapy-playwright |
+| Crawling | httpx and Scrapy by default; Playwright only for JS-rendered or authenticated workflows |
+| Managed crawl/browser providers | Optional adapters such as Firecrawl or Browserbase, never hard dependencies |
 | Search/enrichment providers | Adapter interfaces with mock providers first, licensed APIs later |
 | Email verification | Adapter interface with mock verifier first, licensed API later |
 | Object storage | SeaweedFS or Ceph |
 | Local LLM | Ollama |
-| Observability | OpenTelemetry, Prometheus, Grafana, Loki |
+| Observability | OpenTelemetry, Prometheus, Grafana, Loki, and Tempo or Jaeger for traces |
+
+## Production Tooling Posture
+
+Use open-source-first defaults, but keep every external tool behind typed adapters. The product owns policy, lineage, audit, cost tracking, and evidence contracts even when a managed provider performs collection, browser execution, enrichment, verification, or outreach delivery.
+
+Prefect remains the default workflow orchestrator for early scheduled pipelines, ingestion flows, backfills, and batch processing. Before Production v1, evaluate Temporal for workflows that require durable execution across worker crashes, long-running human pauses, exactly-once external side effects, or customer-visible recovery guarantees. The system must not depend on Prefect-specific business logic; orchestration code belongs in `src/backend/jobs`, while retry-safe business operations stay in `src/backend/core`.
+
+LangGraph should be used for AI graph state, planning, and human-in-loop agent flows when checkpointing and review recovery matter. Agent loops must have iteration limits, timeout limits, budget limits, typed tool contracts, and explicit failure states.
+
+## External Tool Adapter Contract
+
+Every crawl, search, browser, enrichment, verification, LLM, or outreach adapter must declare:
+
+- `adapter_key`, operation type, supported source/provider categories, and typed input/output contract names.
+- Source terms reference, credential operation scope, PII classification, and whether human approval is required.
+- Timeout, retry class, rate-limit key, concurrency budget, cost estimate, and quota metadata.
+- Policy decision ID, trace span name, audit event type, and redaction behavior.
+- Deterministic mock implementation and contract tests before live provider calls are enabled.
+
+Default adapters should cover local fixtures and mocked providers first. Managed providers such as Firecrawl, Browserbase, licensed data APIs, email verifiers, CRM systems, and outreach platforms are enabled only through the same adapter contract and feature-flag rules.
+
+## Job Durability Principles
+
+All long-running work must be represented by typed run and job records before execution. Jobs must be idempotent, lease-based, heartbeat-aware, retry-classified, and safe to resume after worker restart. External side effects such as contact enrichment, email verification, CRM export, and outreach export require idempotency keys and unique constraints.
+
+Event publication must use a transactional outbox/inbox pattern once async workflows begin. API writes, job state changes, and events must not drift apart.
+
+## Container And Supply Chain Posture
+
+Docker Compose is the local development baseline. Production-ready images must use multi-stage Dockerfiles with separate development, test, and production targets; non-root runtime users; pinned base images; explicit healthchecks; small build contexts; and no secrets baked into layers.
+
+Production release gates must include image vulnerability scanning, SBOM/provenance generation, image signing or attestations, Compose/Kubernetes manifest validation, and runtime hardening for browser workers, crawler workers, LLM workers, and export workers. Browser workers need explicit CPU, memory, timeout, and concurrency isolation.
 
 ## Required Product Guarantees
 

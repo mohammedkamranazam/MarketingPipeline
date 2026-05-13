@@ -21,10 +21,14 @@ The system can crawl configured safe public sources, collect permitted search/pr
 - HTTP connector.
 - Scrapy runner.
 - Optional Playwright render mode.
+- Optional managed crawl/browser adapter slots such as Firecrawl or Browserbase behind the standard adapter contract.
 - Raw artifact storage.
 - Rate limit and robots controls.
+- Per-client, per-source, per-provider, and browser-worker concurrency budgets.
 - Search result and profile-evidence artifact capture.
 - Imported/provider artifact lineage for non-crawl records.
+- Crawl/search run monitor UI with polling-first real-time status, retry/cancel controls, cost/quota indicators, and artifact inspector.
+- Data-heavy artifact tables with saved views, row drawers, server filtering/sorting, and virtualization threshold.
 
 ## Steps
 
@@ -41,15 +45,34 @@ The system can crawl configured safe public sources, collect permitted search/pr
 | P05-T09 Add crawl monitor API | Planned | 0% | run status API test |
 | P05-T10 Store permitted search/profile artifacts | Planned | 0% | search result artifact links back to seed lead row |
 | P05-T11 Store provider/import artifacts | Planned | 0% | provider response metadata is queryable without exposing secrets |
+| P05-T12 Add crawl/browser adapter certification | Planned | 0% | HTTP, Scrapy, Playwright, and managed-provider mocks satisfy adapter contract |
+| P05-T13 Add crawl concurrency budgets | Planned | 0% | client/source/provider/browser limits throttle jobs without losing state |
+| P05-FE01 Build crawl/search run monitor | Planned | 0% | polling status, retry/cancel/resume affordances, errors, and cost/quota states visible |
+| P05-FE02 Build artifact inspector | Planned | 0% | raw, parsed, source metadata, policy decision, citation anchors, and lineage visible |
+| P05-FE03 Add table virtualization and saved views rules | Planned | 0% | large artifact tables keep stable layout and responsive detail drawers |
+| P05-FE04 Define real-time job update strategy | Planned | 0% | polling interval, backoff, stale status, and future SSE/WebSocket upgrade path documented/tested |
+| P05-FE05 Add Phase 05 Playwright smoke test | Planned | 0% | inspect crawl/search job and artifact lineage |
+
+## Frontend Screen Acceptance Criteria
+
+- Run monitor shows queued, running, paused, failed, retrying, completed, blocked, and stale states.
+- Polling backs off on background tabs and stops when the run reaches a terminal state.
+- Retry/cancel/resume controls appear only when the current role and run state allow them.
+- Artifact inspector shows source policy, content hash, storage metadata, raw/parsed tabs, and related seed row or job lineage.
+- Tables switch to virtualization or constrained rendering before large result sets degrade interaction.
 
 ## Test Plan
 
 - Crawl one static fixture site.
 - Crawl one JS-rendered fixture.
 - Collect one mocked search-result fixture for a seed lead row.
+- Run adapter contract fixtures for HTTP, Scrapy, Playwright render mode, and one managed-provider mock.
 - Confirm blocked paths are skipped.
+- Confirm per-client, per-source, per-provider, and browser concurrency limits are enforced.
 - Confirm artifacts include content hash, source, job, and storage URL.
 - Confirm profile/search artifacts include policy decision and seed row lineage.
+- Component test run states, polling backoff, retry/cancel permissions, artifact inspector tabs, saved views, and table virtualization threshold.
+- Playwright smoke test run monitor to artifact inspector navigation.
 
 ## Exit Criteria
 
@@ -57,6 +80,10 @@ The system can crawl configured safe public sources, collect permitted search/pr
 - Permitted search/profile evidence can be collected for seed lead enrichment without bypassing source policy.
 - Raw artifacts are queryable by client/source/job.
 - Failed jobs preserve retry/error metadata.
+- HTTP crawling is the default path, with Playwright and managed browser/crawl providers used only when policy and adapter metadata require them.
+- Crawl and browser jobs respect concurrency budgets, leases, heartbeats, rate limits, and idempotency keys.
+- Frontend run monitor exposes status, errors, cost/quota, retry controls, and artifact lineage.
+- Real-time status is polling-first with a documented SSE/WebSocket upgrade path.
 - Tests and lint pass.
 
 ## Handoff To Phase 06

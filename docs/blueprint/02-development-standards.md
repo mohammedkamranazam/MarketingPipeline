@@ -49,8 +49,23 @@ migration test
 plugin contract tests
 security scan
 Docker build
+container image scan
+SBOM/provenance generation
+image signing or attestation for release builds
+Docker Compose config validation for infrastructure changes
 MVP E2E smoke test
 ```
+
+## Container And Supply-Chain Gates
+
+- Application Dockerfiles use multi-stage builds with separate development, test, and production targets.
+- Production images run as non-root users, use pinned base image versions, and keep build tools out of runtime layers.
+- Production images must not use `latest` tags unless an ADR explicitly approves the risk for a local-only service.
+- Docker build contexts must use `.dockerignore` to exclude virtual environments, caches, test artifacts, secrets, and local data volumes.
+- Secrets must be injected through a secret manager or Docker/Compose secrets, not baked into images or logged from environment dumps.
+- Runtime services expose healthchecks, resource limits, and internal networks where possible.
+- Browser, crawler, LLM, and export workers require explicit CPU, memory, timeout, and concurrency budgets.
+- Release builds generate SBOM/provenance metadata, run image and dependency vulnerability scans, and produce an image signature or attestation.
 
 ## Feature Flag Rule
 
@@ -65,6 +80,21 @@ Risky features default off:
 - auto-export
 - direct outreach sync
 - v2 autonomy features
+
+## Orchestration And Tool Review Rule
+
+- Prefect is the default orchestrator for scheduled workflows, ingestion flows, backfills, and batch jobs.
+- Before Production v1, evaluate Temporal for workflows with long human pauses, crash-safe resume requirements, exactly-once external side effects, or customer-visible durability guarantees.
+- Workflow decisions must be documented as ADRs before changing the orchestrator baseline.
+- Business logic stays in `src/backend/core`; Prefect, Temporal, queue, and scheduler integration code stays in `src/backend/jobs`.
+- External tools are used through typed adapters with deterministic mocks and contract tests before live provider calls are enabled.
+
+## Observability Gates
+
+- OpenTelemetry spans must connect API requests, job records, worker attempts, crawler operations, provider calls, LLM invocations, and export actions.
+- Prometheus metrics must cover queue age, attempts, failures, dead letters, provider quotas, costs, and review backlog.
+- Logs must be structured and include `client_id`, `run_id`, `job_id`, `correlation_id`, and `trace_id` when available.
+- A trace backend such as Tempo or Jaeger is required before Production v1; OpenTelemetry instrumentation alone is not enough.
 
 ## Security Requirements
 

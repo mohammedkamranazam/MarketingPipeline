@@ -26,6 +26,9 @@ A user can upload a document for a client and view extracted domain knowledge su
 - Local embedding adapter.
 - ICP extraction schema.
 - Ingestion workflow.
+- First async job/run, transactional outbox, and inbox deduplication contracts.
+- Document ingestion frontend pages with upload, parse timeline, citation preview, and retry/error states.
+- Seed lead import frontend pages with upload wizard, column mapping, validation grid, duplicate/suppression indicators, and row detail drawer.
 
 ## Steps
 
@@ -44,6 +47,21 @@ A user can upload a document for a client and view extracted domain knowledge su
 | P02-T11 Add ICP extraction schema | Planned | 0% | schema validation tests |
 | P02-T12 Add document and lead import ingestion workflows | Planned | 0% | upload triggers parse/chunk/extract or row normalization |
 | P02-T13 Add citation/import preview endpoint | Planned | 0% | extracted item links to evidence and seed rows show validation errors |
+| P02-T14 Add async job and event durability contracts | Planned | 0% | duplicate event replay is deduped and retry resumes from `job_runs` |
+| P02-FE01 Build document ingestion pages | Planned | 0% | upload, status, retry, extracted facts, citations, and parser errors are visible |
+| P02-FE02 Build seed lead import wizard | Planned | 0% | CSV/XLSX upload, field mapping, preview, validation, duplicate, and suppression states are tested |
+| P02-FE03 Add ingestion typed services and MSW fixtures | Planned | 0% | upload, polling, validation failure, parse failure, and retry states tested |
+| P02-FE04 Add data-heavy import grid behavior | Planned | 0% | server pagination, stable URL filters, row detail drawer, column presets, and bulk selection work |
+| P02-FE05 Add Phase 02 Playwright smoke test | Planned | 0% | document upload and seed lead upload show parse or validation result |
+
+## Frontend Screen Acceptance Criteria
+
+- Document list supports loading, empty, populated, failed, and retryable parser states.
+- Document detail shows original file metadata, parse timeline, extracted knowledge suggestions, and citation snippets.
+- Upload forms validate file type and size before submit and display backend parser errors without losing the batch.
+- Seed import batch detail preserves original values, normalized values, row errors, duplicates, suppression indicators, and source context.
+- Import grids keep filter, sort, page, selected columns, and selected row in URL state where useful for support handoff.
+- Evidence Rail opens for selected knowledge suggestions and seed rows with source file, page/row, confidence, and lineage.
 
 ## Test Plan
 
@@ -55,6 +73,10 @@ A user can upload a document for a client and view extracted domain knowledge su
 - Verify extracted suggestions require evidence text.
 - Verify malformed seed rows are retained with actionable row-level errors.
 - Verify seed rows are tenant-scoped and deduplicated by import batch, normalized person fields, company, and source context.
+- Verify ingestion workflows create `pipeline_runs`, `job_runs`, outbox events, and inbox deduplication records before async processing.
+- Verify a retried ingestion job preserves `job_id`, increments attempt count, and does not duplicate extracted records or review suggestions.
+- Component test upload, parser failure, row validation, row detail, filter URL state, and Evidence Rail states.
+- Playwright smoke test document upload and seed lead upload to visible status/validation outcomes.
 
 ## Exit Criteria
 
@@ -62,7 +84,10 @@ A user can upload a document for a client and view extracted domain knowledge su
 - Uploading a sample seed lead file creates an import batch and normalized seed lead rows.
 - Suggestions include confidence and citations.
 - Seed lead rows preserve original values, normalized values, source, and project context.
+- First async workflows use the shared job/run and outbox/inbox contracts from `04-data-api-events.md`.
 - Parser failures are visible and retryable.
+- Frontend ingestion pages expose document and seed lead status without requiring API console use.
+- Frontend tests cover loading, empty, error, permission, validation, and retry states.
 - Tests and lint pass.
 
 ## Handoff To Phase 03

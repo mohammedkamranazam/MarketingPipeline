@@ -52,6 +52,16 @@ Progress is approximate and should be updated manually as phase tasks are comple
 | Intelligence v2 | 00-10 | ROI-aware intelligence layer is usable |
 | Enterprise v3 | 00-11 | Scaled CRM/outreach integrations and outcome learning are usable |
 
+## Production Readiness Gates
+
+The following gates apply across phases and should be treated as enterprise-grade design constraints, not late cleanup:
+
+- Phase 02 introduces shared run/job records, idempotency keys, worker leases, heartbeats, retry classes, and transactional outbox/inbox records before async workflows expand.
+- Phase 04 introduces the external tool adapter contract so crawl, search, browser, enrichment, verification, LLM, CRM, and outreach providers are certified through typed mocks before live use.
+- Phase 05 enforces crawl/browser/provider concurrency budgets and keeps managed crawl or browser services behind optional adapters.
+- Phase 08 proves authenticated browser workflows can pause, resume, recover after worker restart, and preserve human-in-loop state.
+- Phase 09 verifies trace storage, worker operations dashboards, container supply-chain gates, and the Prefect vs Temporal durability decision before Production v1.
+
 ## Execution Rules
 
 - Execute phases in order.
@@ -65,4 +75,6 @@ Progress is approximate and should be updated manually as phase tasks are comple
 2. Implement Alembic and SQLAlchemy setup.
 3. Add `clients`, `client_users`, and `client_settings` with room for discovery and seed-enrichment preferences.
 4. Add `/clients` API tests.
-5. Update this roadmap when Phase 01 progress changes.
+5. Scaffold the Phase 01 React/daisyUI app shell and client workspace pages once `/clients` contracts are stable.
+6. Add the Phase 01 frontend unit/component tests, MSW fixtures, and Playwright smoke test.
+7. Update this roadmap when Phase 01 progress changes.

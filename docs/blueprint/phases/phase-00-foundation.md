@@ -25,6 +25,10 @@ Developers can run the FastAPI service and verify `/health`.
 - First API test.
 - Repository structure under `src/backend`, `src/frontend/web`, `docs`, and `devops`.
 
+## Frontend Baseline Note
+
+Phase 00 reserves the frontend workspace path only. React, daisyUI, frontend contracts, the app shell, and browser-level validation begin in Phase 01 so the frontend can bind to real client workspace contracts.
+
 ## Steps
 
 | Step | Status | Progress | Verification |
@@ -46,4 +50,4 @@ Developers can run the FastAPI service and verify `/health`.
 
 ## Handoff To Phase 01
 
-Phase 01 can now add database dependencies, migrations, and persistent client workspace APIs.
+Phase 01 can now add database dependencies, migrations, persistent client workspace APIs, and the first React/daisyUI frontend slice.

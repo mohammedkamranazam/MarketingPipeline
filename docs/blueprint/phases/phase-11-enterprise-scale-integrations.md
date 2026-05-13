@@ -26,6 +26,7 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 - Advanced source expansion workflow.
 - Scale/load tests.
 - Enterprise governance dashboards.
+- Enterprise frontend for CRM/outreach mappings, outcome ingestion, provider quality, tenant dashboards, saved views, and scale controls.
 
 ## Steps
 
@@ -43,6 +44,19 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 | P11-T10 Add outreach connector | Planned | 0% | sandbox campaign/inbox export test |
 | P11-T11 Add engagement outcome ingestion | Planned | 0% | sent, bounced, opened, replied, unsubscribed events attach to leads |
 | P11-T12 Add provider quality learning | Planned | 0% | source/provider weights update through approved policy |
+| P11-FE01 Build CRM and outreach mapping editors | Planned | 0% | field mapping, validation, sandbox test, diff, and rollback states tested |
+| P11-FE02 Build outcome and engagement dashboards | Planned | 0% | replies, meetings, opportunities, wins, bounces, unsubscribes, and suppression effects visible |
+| P11-FE03 Build enterprise tenant dashboards | Planned | 0% | tenant, source, provider, cost, quota, quality, and deliverability metrics support saved views |
+| P11-FE04 Add scale controls for large tenant data | Planned | 0% | server-side filtering/sorting, virtualization, column presets, export handoff, and URL state tested |
+| P11-FE05 Add Phase 11 Playwright smoke test | Planned | 0% | configure CRM/outreach mapping and inspect outcome ingestion |
+
+## Frontend Screen Acceptance Criteria
+
+- CRM/outreach mapping editors validate required fields, show before/after diffs, support sandbox tests, and do not expose secrets.
+- Outcome dashboards connect engagement events to leads, exports, providers, suppression updates, and scoring feedback.
+- Enterprise dashboards support saved views, tenant filters, provider filters, date ranges, and shareable URL state.
+- Large tables use server-side data operations and virtualization before interaction degrades.
+- Cross-tenant access errors are visible, audited, and never leak tenant metadata.
 
 ## Test Plan
 
@@ -53,6 +67,8 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 - Verify scoring changes require approval.
 - Run load tests for v1 target capacity.
 - Verify cross-tenant data isolation under load.
+- Component test mapping editors, sandbox failures, outcome dashboards, saved views, cross-tenant errors, and large-table behavior.
+- Playwright smoke test CRM/outreach mapping setup and outcome dashboard inspection.
 
 ## Exit Criteria
 
@@ -60,6 +76,7 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 - Multi-tenant dashboards show quality/cost/source metrics.
 - Provider quality, verification, and deliverability dashboards show tenant-level metrics.
 - Load tests meet v1 targets or document bottlenecks.
+- Enterprise frontend supports integration mapping, outcome inspection, saved views, large-table behavior, and tenant-safe dashboards.
 - Tests and lint pass.
 
 ## Final State

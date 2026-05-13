@@ -22,9 +22,11 @@ An operator can configure an authenticated source, validate login, pause on auth
 - Playwright storage-state login.
 - Auth session validation.
 - HITL auth queue states.
+- Durable authenticated job checkpoint and resume behavior.
 - Manual re-auth UI.
 - CAPTCHA/MFA guard policy.
 - Authenticated source operation scopes for crawl, search, import, enrichment, and outreach.
+- Auth session and recovery UI with safe credential metadata, challenge state, scoped resume controls, and audit-ready decision history.
 
 ## Steps
 
@@ -39,6 +41,19 @@ An operator can configure an authenticated source, validate login, pause on auth
 | P08-T07 Add CAPTCHA/MFA policy guard | Planned | 0% | challenge routes to HITL |
 | P08-T08 Add optional solver interface | Planned | 0% | disabled by default test |
 | P08-T09 Add authenticated operation scopes | Planned | 0% | credentials can be approved for crawl/search/import/enrichment/outreach independently |
+| P08-T10 Add authenticated job checkpointing | Planned | 0% | worker restart resumes or pauses without losing auth/review state |
+| P08-FE01 Build auth sessions dashboard | Planned | 0% | valid, expired, challenged, revoked, paused, and resumed states visible |
+| P08-FE02 Build manual re-auth UI | Planned | 0% | challenge instructions, secure handoff, retry, cancel, and resume controls tested |
+| P08-FE03 Add auth recovery permission gates | Planned | 0% | only approved roles can refresh, revoke, or broaden credential operation scopes |
+| P08-FE04 Add Phase 08 Playwright smoke test | Planned | 0% | refresh auth session and resume paused job |
+
+## Frontend Screen Acceptance Criteria
+
+- Auth session screens never display raw credentials, tokens, cookies, or storage-state values.
+- CAPTCHA/MFA states are clearly separated from general provider errors and route to human action by default.
+- Resume controls show the original job, source, operation scope, and policy decision before continuing.
+- Credential scope changes use the Phase 03 permission matrix and require confirmation when access broadens.
+- Audit context is visible for refresh, revoke, resume, and failed auth attempts.
 
 ## Test Plan
 
@@ -47,13 +62,19 @@ An operator can configure an authenticated source, validate login, pause on auth
 - Verify expired session pauses source and creates review task.
 - Verify refreshed session resumes original job.
 - Verify a credential approved for one operation scope cannot be reused for another scope.
+- Verify a worker restart preserves authenticated job state, storage-state metadata, policy decision, and HITL recovery task.
+- Verify browser jobs run under isolated timeout, CPU, memory, and concurrency budgets.
+- Component test auth states, secret redaction, permission gates, resume confirmation, and audit context.
+- Playwright smoke test manual re-auth recovery with mocked portal state.
 
 ## Exit Criteria
 
 - Authenticated crawling works for approved test source.
 - CAPTCHA/MFA triggers HITL by default.
 - Session state is encrypted and revocable.
+- Authenticated browser jobs can be paused, resumed, cancelled, retried, or dead-lettered through the shared job state model.
 - Restricted profile or bid-platform workflows run only when explicitly authorized by source policy.
+- Auth recovery UI lets approved operators safely refresh sessions and resume paused jobs without exposing secrets.
 - Tests and lint pass.
 
 ## Handoff To Phase 09

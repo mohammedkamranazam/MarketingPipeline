@@ -29,6 +29,8 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 - Email verification schemas and workflow.
 - Company research summary generation with citations.
 - Optional knowledge graph tables.
+- Extraction, profile candidate, enrichment, and email verification frontend views with comparison, evidence, confidence, and manual-follow-up states.
+- Shared evidence and score components prepared for Phase 07 lead review.
 
 ## Steps
 
@@ -49,6 +51,19 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 | P06-T13 Add enrichment provider adapter contracts | Planned | 0% | mock provider returns typed contact/email candidates |
 | P06-T14 Add email verification workflow | Planned | 0% | verified, risky, invalid, and unknown fixture tests |
 | P06-T15 Generate cited research summaries | Planned | 0% | 2-3 sentence summary requires evidence and source links |
+| P06-FE01 Build extraction entity views | Planned | 0% | companies, signals, contacts, evidence, confidence, and schema-error states visible |
+| P06-FE02 Build profile candidate comparison | Planned | 0% | side-by-side candidate evidence, confidence, source policy, and reviewer action states tested |
+| P06-FE03 Build enrichment and verification monitor | Planned | 0% | provider result, provenance, deliverability, risky/invalid/unknown, and error states visible |
+| P06-FE04 Add reusable evidence/score components | Planned | 0% | CitationChip, EvidenceRail sections, ConfidenceMeter, and VerificationBadge tested |
+| P06-FE05 Add Phase 06 Playwright smoke test | Planned | 0% | inspect profile candidates and email verification states |
+
+## Frontend Screen Acceptance Criteria
+
+- Extraction views show schema-valid entities, schema failures, low-confidence items, and retry/manual-review routing.
+- Profile comparison keeps source evidence, title/company/location match reasons, and policy gates visible at the same time.
+- Email verification states use text plus color and explain why an address is eligible, risky, invalid, unknown, or blocked.
+- Provider result views never expose raw secrets and always show provider provenance, cost metadata when available, and request lineage.
+- Evidence Rail can follow selected extraction, profile candidate, contact candidate, or verification record.
 
 ## Test Plan
 
@@ -59,6 +74,8 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 - Provider email results require provider provenance and verification status before scoring.
 - LLM ranking can choose among candidates but cannot create email, phone, or profile values.
 - Low-confidence extraction routes to review.
+- Component test evidence components, profile comparison, verification badges, provider errors, and manual follow-up routing.
+- Playwright smoke test candidate comparison and verification state inspection.
 
 ## Exit Criteria
 
@@ -68,6 +85,8 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 - Approved provider adapters produce contact enrichment and email verification records with lineage.
 - Research summaries cite stored artifacts or provider-approved evidence.
 - Schema failures are retryable or visible.
+- Frontend extraction and enrichment views make evidence, confidence, provenance, and verification gates inspectable.
+- Shared evidence components are ready for the lead review workspace.
 - Tests and lint pass.
 
 ## Handoff To Phase 07
