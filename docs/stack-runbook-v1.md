@@ -4,13 +4,13 @@
 
 ```bash
 cd /Users/abuazka/VSCodeProjects/MarketingPipeline
-docker compose up -d
+docker compose -f devops/docker-compose.yml up -d
 ```
 
 ## Verify
 
 ```bash
-docker compose ps
+docker compose -f devops/docker-compose.yml ps
 ```
 
 Expected endpoints:
@@ -33,13 +33,13 @@ docker exec -it mp_ollama ollama pull qwen2.5-coder:14b
 ## Stop
 
 ```bash
-docker compose down
+docker compose -f devops/docker-compose.yml down
 ```
 
 ## Reset data volumes (destructive)
 
 ```bash
-docker compose down -v
+docker compose -f devops/docker-compose.yml down -v
 ```
 
 ## Security notes

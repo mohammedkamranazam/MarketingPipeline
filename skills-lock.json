@@ -1,6 +1,120 @@
 {
   "version": 1,
   "skills": {
+    "ai-agents-architect": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ai-agents-architect/SKILL.md",
+      "computedHash": "9f8cc6d0a2a84aae57b0b406d43a320dccd69a0ec56698df87691d78d8a83cc1"
+    },
+    "angular-component": {
+      "source": "analogjs/angular-skills",
+      "sourceType": "github",
+      "skillPath": "skills/angular-component/SKILL.md",
+      "computedHash": "2789fdf11e2a70832ce2e6e79954018325a010ebdd45c5d4b1e7bfdf44679b7c"
+    },
+    "angular-developer": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "skillPath": "angular-developer/SKILL.md",
+      "computedHash": "36f7f57e1485c994de62eae5b00f54c12f81d1d16661afa6d3c214dd9bcf7269"
+    },
+    "architecture-diagrams": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/architecture-diagrams/SKILL.md",
+      "computedHash": "f9b66de144a5ebc40d99425745e2618c546299d324dc7474a421a19981f84c1c"
+    },
+    "architecture-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/backend-development/skills/architecture-patterns/SKILL.md",
+      "computedHash": "cf81f4523a2fd3017590cf2792fe305e4375d2f75d22037b92f05852e22feae2"
+    },
+    "backend-architect": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/backend-architect/SKILL.md",
+      "computedHash": "991cd650814b2e4e434720ebe20ae8d00e1b2c8a3ac3193c1a5d477e729b595c"
+    },
+    "backend-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/backend-patterns/SKILL.md",
+      "computedHash": "0f4cb3da46b8ce80176f9dbd241242e3033a999b32e952f2467faba4d38d69c9"
+    },
+    "clean-architecture": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.experimental/clean-architecture/SKILL.md",
+      "computedHash": "613e3421174049dfb4a528c072cafb5e805322a6d9e1522ec9b74077e07947d7"
+    },
+    "cloud-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud-architect/SKILL.md",
+      "computedHash": "9082e59c3dc8f05378bc52dc043724e22da525eea38916becb8778e2d320ac92"
+    },
+    "cloud-design-patterns": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/cloud-design-patterns/SKILL.md",
+      "computedHash": "be69c23d717e7f1ddd9b288c5ce36a582eb5717086392cbe5b0dd1faa5423c8e"
+    },
+    "code-reviewer": {
+      "source": "google-gemini/gemini-cli",
+      "sourceType": "github",
+      "skillPath": ".gemini/skills/code-reviewer/SKILL.md",
+      "computedHash": "270f0dd1d4c15a798bad5253a309cdc2056fe5322f99ba06ca22ce50581adc02"
+    },
+    "deep-research": {
+      "source": "199-biotechnologies/claude-deep-research-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "685efecf2091dccf219506641671acc3c0c31ecb83f54b8473b9d399ba0337b8"
+    },
+    "design-system-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/ui-design/skills/design-system-patterns/SKILL.md",
+      "computedHash": "5f8c9b187e77fcb31db78da2f7b55f905dcd2357454624cac93f00c766ace346"
+    },
+    "docker-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/docker-expert/SKILL.md",
+      "computedHash": "0974b5f64fcd284c1bd662810e2388f7beb9be6784c597de4d0ad4213ccbd6af"
+    },
+    "efcore-patterns": {
+      "source": "aaronontheweb/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/efcore-patterns/SKILL.md",
+      "computedHash": "5337e0cbae6293dee81f357dd41e008130d2c525005fa2fc3501a3931d98e41f"
+    },
+    "fullstack-developer": {
+      "source": "shubhamsaboo/awesome-llm-apps",
+      "sourceType": "github",
+      "skillPath": "awesome_agent_skills/fullstack-developer/SKILL.md",
+      "computedHash": "d824d75875b289753740c12ba33c005a40f0d996f12d3424cabf1ef9ad4cd1a3"
+    },
+    "interface-design": {
+      "source": "dammyjay93/interface-design",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/interface-design/SKILL.md",
+      "computedHash": "d004c5e5e2e7132e1d64e9c2a339db7f7aaa69053a5c19cddc210dd35dd6fff5"
+    },
+    "javascript-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/javascript-pro/SKILL.md",
+      "computedHash": "d5d4526309a674a2ddfd99aa9fb31fe061af225a7b3750eed52a2d38c8ce6041"
+    },
+    "javascript-typescript-jest": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/javascript-typescript-jest/SKILL.md",
+      "computedHash": "0073d19ab0275eb6a8200aced6789a53744667bd717b5d1f44ce708a1740e5d4"
+    },
     "langchain-architecture": {
       "source": "wshobson/agents",
       "sourceType": "github",
@@ -30,6 +144,168 @@
       "sourceType": "github",
       "skillPath": "config/skills/langgraph-fundamentals/SKILL.md",
       "computedHash": "d754005c69632037ca79c4daa8177b03e5a0f17f40cde3b0f532b33a8df88ded"
+    },
+    "modern-javascript-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/javascript-typescript/skills/modern-javascript-patterns/SKILL.md",
+      "computedHash": "0029f68d5b92753960cf57c00da77913973507350dad148acaa46313691a509a"
+    },
+    "multi-cloud-architecture": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/cloud-infrastructure/skills/multi-cloud-architecture/SKILL.md",
+      "computedHash": "7d0e516cd47683a0380645a7c6d2f560eb6ec1b1085fc7df4f88bdcabe5646b3"
+    },
+    "playwright": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/playwright/SKILL.md",
+      "computedHash": "595a334de3bd5335f442a33d1bdefb01207c88c99fe43e3bd99b0d5435f230de"
+    },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "320eaf861e3a0a923bfaad0726cb311a3fe30093378f8d26c89b9c5ae5c42b35"
+    },
+    "playwright-dev": {
+      "source": "microsoft/playwright",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/playwright-dev/SKILL.md",
+      "computedHash": "612bb6cc622a70f5ad2a3b484f46c3d870478d3a4f4d396bedcf2cc1038c2f5b"
+    },
+    "playwright-expert": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-expert/SKILL.md",
+      "computedHash": "2715b8412ae840555d77d3d2c566e6f75ca42900637363d7574356af409ae10c"
+    },
+    "playwright-generate-test": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-generate-test/SKILL.md",
+      "computedHash": "8f963da3e25f705ff39755b8b990f20da0c0320cb86ac83fcc4d2d4eca91f6e4"
+    },
+    "playwright-skill": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-skill/SKILL.md",
+      "computedHash": "465b1d346b9fabd4c8abe4fa1cecf285109f587cf8f159babc054d96dfb30a36"
+    },
+    "playwriter": {
+      "source": "remorses/playwriter",
+      "sourceType": "github",
+      "skillPath": "skills/playwriter/SKILL.md",
+      "computedHash": "0bc049738095d117531cc6e4e461d55a432d0d8000b3279d76d47891e55c7152"
+    },
+    "postgres-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/postgres-pro/SKILL.md",
+      "computedHash": "b5385f29408d4bd80666e608dbd7da3d4bed9153afa53b71bda94c6bf7ba8d51"
+    },
+    "postgresql-optimization": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/postgresql-optimization/SKILL.md",
+      "computedHash": "8022448de70ba9a485e3b5bce34c5bbc644f93eb39b68431c9f7dabcf03aeb09"
+    },
+    "rag-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/rag-architect/SKILL.md",
+      "computedHash": "650ce80b998ce2c3004c5276a1eabaa2ad4131d4256832eed9a5e06cdc98454d"
+    },
+    "react-doctor": {
+      "source": "millionco/react-doctor",
+      "sourceType": "github",
+      "skillPath": "skills/react-doctor/SKILL.md",
+      "computedHash": "b8f396bd6db7404a899af03e649f2cf12f4c846ee7d85b6b9a475cb8175abb49"
+    },
+    "react-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/react-patterns/SKILL.md",
+      "computedHash": "15f7299cfc3708d572db2e813b22af39f4284cbab9a824f518556b21131b198a"
+    },
+    "react:components": {
+      "source": "google-labs-code/stitch-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-components/SKILL.md",
+      "computedHash": "01a94f035a1c3a1a405f611c0df212433d8973f18bf16e94540875ec58ee7b9b"
+    },
+    "senior-architect": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/senior-architect/SKILL.md",
+      "computedHash": "9bbe574ab4a0b6c7183e5631386b2bc44b31eaaa5d7843dd5d332631d8c25fe6"
+    },
+    "sleek-design-mobile-apps": {
+      "source": "sleekdotdesign/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/design-mobile-apps/SKILL.md",
+      "computedHash": "0d02f033f464cd0c9f3c133378e582c0d6796393eb4f9ab2312f3d9cf9a33cf3"
+    },
+    "software-architecture": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/software-architecture/SKILL.md",
+      "computedHash": "19ee028010077ff687e3fcf9613b4f9b9d6c839a15396007d9ba263f6930ec6a"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "d606a1146be6d54fb9e73f718b5320b9acac5ff2ba2d7230a555df4b5a923b4a"
+    },
+    "tailwind-css-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
+      "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
+    },
+    "threejs-animation": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-animation/SKILL.md",
+      "computedHash": "8c50b1493812bd88f3ed0637c0c3c5d846afdb322157b67b2ffba4ce8e552835"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/javascript-typescript/skills/typescript-advanced-types/SKILL.md",
+      "computedHash": "3a3be8c925f96ac4e1280db28a01677e7ca5197f3792de2bbf35ab3bb324b6dd"
+    },
+    "typescript-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/typescript-expert/SKILL.md",
+      "computedHash": "525e74a7220ed67832001ca89b46deae8f2bab1abc9d25c56c8716d6550c795f"
+    },
+    "typescript-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/typescript-pro/SKILL.md",
+      "computedHash": "b53b57340243eab4b75acee9096f0444319bb1b9e8530fdab4d1d75e1568fa6c"
+    },
+    "typescript-react-reviewer": {
+      "source": "dotneet/claude-code-marketplace",
+      "sourceType": "github",
+      "skillPath": "review-tool/skills/typescript-react-reviewer/SKILL.md",
+      "computedHash": "7f86cd28e11d2b4b120b635d18814b82cd655a2b9d9ba8a105b3ee06c478cf38"
+    },
+    "ui-animation": {
+      "source": "mblode/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-animation/SKILL.md",
+      "computedHash": "c0df66c159771b0a92f74d9b2a3c6653bb75a35c31e5a7f82a866af52b23f651"
+    },
+    "vue": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vue/SKILL.md",
+      "computedHash": "9c241141e07e836e4f0537c63e8f929fba3767c2997250be38e699f19b75e3f2"
     }
   }
 }

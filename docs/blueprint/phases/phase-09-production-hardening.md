@@ -1,0 +1,58 @@
+# Phase 09: Production Hardening
+
+| Field | Value |
+|---|---|
+| Status | Planned |
+| Progress | 0% |
+| Depends On | Phase 08 |
+| Release | Production v1 |
+
+## Goal
+
+Make the v1 pipeline observable, secure, testable, and deployable for production clients.
+
+## Usable Outcome
+
+The system can run scheduled production jobs with monitoring, audit logs, CI/CD gates, and incident runbooks.
+
+## Deliverables
+
+- OpenTelemetry traces.
+- Prometheus metrics.
+- Audit logs.
+- LLM invocation tracking.
+- Compliance export simulation.
+- CI/CD release gates.
+- Incident runbooks.
+
+## Steps
+
+| Step | Status | Progress | Verification |
+|---|---|---:|---|
+| P09-T01 Add OpenTelemetry tracing | Planned | 0% | trace ID across API/worker |
+| P09-T02 Add Prometheus metrics | Planned | 0% | metrics endpoint/dashboard |
+| P09-T03 Add structured audit logs | Planned | 0% | audit search test |
+| P09-T04 Add LLM cost/token tracking | Planned | 0% | invocation log test |
+| P09-T05 Add compliance export simulation | Planned | 0% | blocked export test |
+| P09-T06 Add security tests | Planned | 0% | SSRF/secret/prompt tests |
+| P09-T07 Add CI/CD workflow | Planned | 0% | PR checks pass |
+| P09-T08 Add backup/retention jobs | Planned | 0% | retention dry run |
+| P09-T09 Add incident runbooks | Planned | 0% | runbook links in ops docs |
+
+## Test Plan
+
+- Run MVP E2E with tracing enabled.
+- Verify audit coverage for config/auth/export.
+- Verify export simulation blocks policy violations.
+- Verify CI gates match developer standards.
+
+## Exit Criteria
+
+- Production release checklist passes.
+- SLO metrics are visible.
+- Critical runbooks exist.
+- Tests and lint pass.
+
+## Handoff To Phase 10
+
+Phase 10 can add v2 intelligence features behind feature flags.
