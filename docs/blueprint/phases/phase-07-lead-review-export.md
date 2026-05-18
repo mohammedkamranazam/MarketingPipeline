@@ -9,11 +9,11 @@
 
 ## Goal
 
-Resolve candidates into scored leads, route them through review, and generate CRM-ready and outreach-ready exports.
+Resolve pipeline candidates into scored leads, route them through review, and generate pipeline-specific CRM-ready and outreach-ready exports.
 
 ## Usable Outcome
 
-A user can review evidence-backed leads from both discovery and seed-enrichment lanes, then download an approved CRM or outreach XLSX/CSV export.
+A user can review evidence-backed leads from both discovery and seed-enrichment lanes in the selected pipeline, then download an approved CRM or outreach XLSX/CSV export that cannot include another pipeline's rows.
 
 ## Deliverables
 
@@ -70,6 +70,7 @@ A user can review evidence-backed leads from both discovery and seed-enrichment 
 - Export only approved leads.
 - Block outreach export for unverified, invalid, suppressed, or unreviewed emails.
 - Verify every export row links to evidence and reviewer.
+- Verify an export batch cannot mix leads from two pipelines unless a future governed enterprise combined export explicitly enables it.
 - Component test review queue states, keyboard mode, score breakdown, decision history, bulk safeguards, manual follow-up states, export blockers, and payload preview.
 - Playwright smoke test lead approval and compliant export creation.
 
@@ -77,6 +78,7 @@ A user can review evidence-backed leads from both discovery and seed-enrichment 
 
 - Weekly CRM-ready export can be generated.
 - Outreach-ready export can be generated for reviewed leads with verified emails and personalization notes.
+- Export batches, review decisions, blocker summaries, and feedback records are isolated by `client_id` and `pipeline_id`.
 - Export blocks unreviewed or compliance-blocked leads.
 - Export blocks rows that fail email verification, suppression, or source policy gates.
 - Review decisions feed feedback records.

@@ -32,6 +32,8 @@ Both lanes must preserve source policy, typed contracts, tenant isolation, human
 | [03-product-governance.md](03-product-governance.md) | Product workflows, governance, SLOs, risks |
 | [04-data-api-events.md](04-data-api-events.md) | Data, API, event, and worker contracts |
 | [frontend.md](frontend.md) | React, daisyUI, page, component, service, and frontend phase roadmap |
+| [testable_blueprint.md](testable_blueprint.md) | Phase-bound diagnostic UI, run evidence, and end-to-end testability overlay |
+| [multi-pipeline-plan.md](multi-pipeline-plan.md) | Independent pipeline scope, per-pipeline configuration, credentials, and roadmap integration |
 | [phases/](phases/) | Executable phase plans |
 
 ## Status Values

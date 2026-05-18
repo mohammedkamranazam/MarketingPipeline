@@ -9,11 +9,11 @@
 
 ## Goal
 
-Make the v1 pipeline observable, secure, testable, and deployable for production clients across discovery and seed lead enrichment lanes.
+Make v1 pipelines observable, secure, testable, and deployable for production clients across discovery and seed lead enrichment lanes.
 
 ## Usable Outcome
 
-The system can run scheduled production jobs with monitoring, audit logs, CI/CD gates, incident runbooks, and enrichment/outreach quality metrics.
+The system can run scheduled production jobs with monitoring, audit logs, CI/CD gates, incident runbooks, and enrichment/outreach quality metrics by client and pipeline.
 
 ## Deliverables
 
@@ -29,6 +29,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 - Worker capacity, dead-letter, lease, and backpressure dashboards.
 - Incident runbooks.
 - Provider quota, enrichment quality, email verification, and bounce-rate metrics.
+- Pipeline-level run, trace, audit, cost, quota, credential health, and expiry dashboards.
 - Frontend production quality gates: strict TypeScript, accessibility checks, visual regression screenshots, bundle budgets, and route smoke tests.
 - Storybook or equivalent component catalog for daisyUI wrappers, domain components, states, themes, and accessibility examples.
 
@@ -50,6 +51,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 | P09-T12 Add container supply-chain gates | Planned | 0% | pinned builds produce SBOM/provenance, scan results, and signed or attested images |
 | P09-T13 Add Prefect vs Temporal durability ADR | Planned | 0% | ADR covers crash recovery, HITL pauses, exports, costs, and migration path |
 | P09-T14 Add worker operations dashboards | Planned | 0% | queue age, leases, heartbeats, retries, dead letters, concurrency, and budget stops visible |
+| P09-T15 Add pipeline operations filters and credential alerts | Planned | 0% | run, trace, audit, metrics, quota, and credential health are filterable by client and pipeline |
 | P09-FE01 Add frontend CI quality gates | Planned | 0% | typecheck, lint, unit/component tests, accessibility checks, and Playwright smoke run in CI |
 | P09-FE02 Add visual regression coverage | Planned | 0% | app shell, tables, review workspace, forms, modals, drawers, light/dark themes, and mobile breakpoints captured |
 | P09-FE03 Add component catalog | Planned | 0% | daisyUI wrappers, domain components, loading/empty/error states, themes, and accessibility examples documented |
@@ -70,6 +72,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 
 - Run MVP E2E with tracing enabled.
 - Verify audit coverage for config/auth/export.
+- Verify audit coverage includes `pipeline_id` for pipeline-owned config, credentials, auth, runs, review, and export.
 - Verify audit coverage for profile search, provider enrichment, email verification, and outreach export.
 - Verify export simulation blocks policy violations.
 - Verify trace backend queries can follow one sample lead from API request through worker, crawler/provider, LLM, review, and export.
@@ -78,6 +81,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 - Verify the Prefect vs Temporal ADR is linked from production runbooks and records the decision criteria.
 - Verify worker dashboards expose queue age, retries, dead letters, stuck leases, and browser-worker concurrency.
 - Verify dashboards expose seed import throughput, verification pass rate, manual follow-up volume, provider cost, and bounce rate.
+- Verify dashboards expose credential expiry, validation failures, rotation due, revoked/disabled credentials, and dependent pipelines.
 - Verify CI gates match developer standards.
 - Run frontend typecheck, unit/component tests, accessibility checks, visual regression checks, and Playwright route smoke tests in CI.
 - Verify component catalog examples render with the custom daisyUI themes and no accessibility violations.
@@ -86,6 +90,7 @@ The system can run scheduled production jobs with monitoring, audit logs, CI/CD 
 
 - Production release checklist passes.
 - SLO metrics are visible.
+- SLO, credential health, and run health metrics are visible by pipeline.
 - Distributed traces are queryable in a trace backend, not only emitted by instrumentation.
 - Container supply-chain gates pass for API, worker, crawler, LLM, outreach, and frontend images.
 - The workflow orchestrator decision is documented with a clear Temporal migration trigger if Prefect remains the default.

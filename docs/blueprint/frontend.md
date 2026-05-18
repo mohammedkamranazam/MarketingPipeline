@@ -26,12 +26,15 @@ The frontend is an evidence operations workspace for people who need to turn doc
 Primary humans:
 
 - Admins configuring clients, sources, providers, credentials, guardrails, users, and audits.
+- Admins configuring multiple independent pipelines under each client, including pipeline-specific settings, sources, providers, credentials, schedules, budgets, and run histories.
 - Domain experts approving ICP, title, exclusion, enrichment, suppression, and outreach rules.
 - Research reviewers deciding whether evidence-backed leads are accurate enough to approve.
 - Sales operators preparing export batches, reviewing outreach readiness, and reading campaign outcomes.
 - Compliance reviewers checking source policy, PII lineage, suppression, and audit history.
 
 The interface should feel quiet, dense, inspectable, and accountable. It should behave like an operations console rather than a marketing site. The first screen after login is the app workspace, not a landing page.
+
+Pipeline scope must be visible in the app shell. A user should always know which customer and which pipeline they are viewing, and pipeline-owned pages must not silently combine data from multiple pipelines.
 
 ## Design Direction
 
@@ -351,7 +354,7 @@ These pages sit outside a single phase-specific workspace route but are required
 | Phase | Routes | Primary personas | Purpose |
 |---|---|---|---|
 | 00 | `/health`, `/system/status` | Admin | Show frontend/API reachability and environment status. |
-| 01 | `/clients`, `/clients/new`, `/clients/:clientId`, `/clients/:clientId/settings`, `/clients/:clientId/users` | Admin | Create, list, inspect, and update client workspaces and settings. |
+| 01 | `/clients`, `/clients/new`, `/clients/:clientId`, `/clients/:clientId/settings`, `/clients/:clientId/users`, `/clients/:clientId/pipelines`, `/clients/:clientId/pipelines/new`, `/clients/:clientId/pipelines/:pipelineId`, `/clients/:clientId/pipelines/:pipelineId/settings` | Admin | Create, list, inspect, and update client workspaces, independent pipelines, and settings. |
 | 02 | `/clients/:clientId/documents`, `/clients/:clientId/documents/:documentId`, `/clients/:clientId/lead-imports`, `/clients/:clientId/lead-imports/:batchId`, `/clients/:clientId/knowledge` | Admin, domain expert, research reviewer | Upload documents and seed lead sheets, inspect parse status, extracted knowledge, validation errors, and citations. |
 | 03 | `/clients/:clientId/review/config`, `/clients/:clientId/config/icp`, `/clients/:clientId/config/guardrails`, `/clients/:clientId/config/suppression`, `/clients/:clientId/config/title-mappings` | Domain expert, compliance reviewer | Approve ICP suggestions and activate enrichment, verification, suppression, and outreach guardrails. |
 | 04 | `/clients/:clientId/sources`, `/clients/:clientId/sources/:sourceId`, `/clients/:clientId/providers`, `/clients/:clientId/policies`, `/clients/:clientId/credentials` | Admin, compliance reviewer | Configure sources, providers, operation policy, credentials, rate limits, and policy previews. |
@@ -363,13 +366,16 @@ These pages sit outside a single phase-specific workspace route but are required
 | 10 | `/clients/:clientId/intelligence/hypotheses`, `/clients/:clientId/intelligence/signals`, `/clients/:clientId/intelligence/attention`, `/clients/:clientId/strategy` | Admin, domain expert, sales operator | Prioritize work by expected value, temporal signals, skeptic pass, and campaign strategy. |
 | 11 | `/clients/:clientId/integrations/crm`, `/clients/:clientId/integrations/outreach`, `/clients/:clientId/outcomes`, `/admin/enterprise`, `/admin/provider-quality` | Admin, sales operator | Manage CRM/outreach mappings, outcome ingestion, provider quality, tenant scale, and enterprise governance. |
 
+Pipeline-owned phase routes should be implemented under `/clients/:clientId/pipelines/:pipelineId/...` even when the shorthand route above is shown for readability. Client-level admin pages, such as users and client defaults, stay under `/clients/:clientId/...`.
+
 ## Admin Perspective
 
 Admin workflows:
 
 - Create a client workspace and configure default discovery/enrichment/export settings.
+- Create multiple independent pipelines under a client and configure each pipeline's lane, target, data needs, schedule, budget, sources, providers, credentials, and export defaults.
 - Invite users and assign roles.
-- Configure source connectors, providers, credentials, and operation scopes.
+- Configure source connectors, providers, credentials, and operation scopes per pipeline.
 - Preview policy decisions before enabling a source or provider.
 - Monitor runs, auth sessions, provider quotas, costs, and production metrics.
 - Review audit logs and before/after configuration diffs.
@@ -380,6 +386,7 @@ Admin pages:
 - Client list.
 - Client create/edit.
 - Client settings.
+- Pipeline list, detail, settings, and config version history.
 - User and role management.
 - Source registry.
 - Provider registry.
@@ -397,6 +404,10 @@ Admin-specific components:
 
 - `ClientWorkspaceForm`.
 - `ClientSettingsEditor`.
+- `PipelineWorkspaceForm`.
+- `PipelineSettingsEditor`.
+- `PipelineSwitcher`.
+- `PipelineStatusBadge`.
 - `RoleAssignmentTable`.
 - `SourceConnectorForm`.
 - `ProviderConnectorForm`.
@@ -602,6 +613,9 @@ Workspace services:
 - `clientService`: `/clients`.
 - `clientUserService`: client users and roles.
 - `clientSettingsService`: workspace settings, modes, export defaults, guardrails.
+- `pipelineService`: `/clients/:clientId/pipelines`.
+- `pipelineSettingsService`: pipeline target, lane, schedule, budget, export defaults, and guardrails.
+- `pipelineConfigVersionService`: immutable pipeline config versions and active/draft/superseded state.
 
 Ingestion services:
 
@@ -679,6 +693,9 @@ Required contract groups:
 - `clients`.
 - `client-users`.
 - `client-settings`.
+- `pipelines`.
+- `pipeline-settings`.
+- `pipeline-config-versions`.
 - `documents`.
 - `lead-imports`.
 - `knowledge`.

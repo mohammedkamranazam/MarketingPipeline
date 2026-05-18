@@ -93,7 +93,7 @@ Risky features default off:
 
 - OpenTelemetry spans must connect API requests, job records, worker attempts, crawler operations, provider calls, LLM invocations, and export actions.
 - Prometheus metrics must cover queue age, attempts, failures, dead letters, provider quotas, costs, and review backlog.
-- Logs must be structured and include `client_id`, `run_id`, `job_id`, `correlation_id`, and `trace_id` when available.
+- Logs must be structured and include `client_id`, `pipeline_id`, `run_id`, `job_id`, `correlation_id`, and `trace_id` when available.
 - A trace backend such as Tempo or Jaeger is required before Production v1; OpenTelemetry instrumentation alone is not enough.
 
 ## Security Requirements
@@ -114,4 +114,5 @@ Risky features default off:
 - Destructive changes require approval and backfill plan.
 - Long backfills run as jobs.
 - Every tenant table has `client_id`.
+- Every pipeline-owned table has both `client_id` and `pipeline_id`.
 - Every extracted record stores schema/model/prompt version when relevant.

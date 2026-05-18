@@ -9,11 +9,11 @@
 
 ## Goal
 
-Scale the platform across clients, integrate CRM and outreach systems, and learn from revenue and engagement outcomes.
+Scale the platform across clients and pipelines, integrate CRM and outreach systems, and learn from revenue and engagement outcomes.
 
 ## Usable Outcome
 
-The system can ingest CRM and outreach outcomes, improve scoring from downstream results, tune enrichment quality, and operate across many tenants with scale controls.
+The system can ingest CRM and outreach outcomes, improve scoring from downstream results, tune enrichment quality, compare pipelines safely, and operate across many tenants with scale controls.
 
 ## Deliverables
 
@@ -27,6 +27,7 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 - Scale/load tests.
 - Enterprise governance dashboards.
 - Enterprise frontend for CRM/outreach mappings, outcome ingestion, provider quality, tenant dashboards, saved views, and scale controls.
+- Governed cross-pipeline analytics and combined reporting views that remain read-only unless an explicit export policy permits combined output.
 
 ## Steps
 
@@ -67,6 +68,7 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 - Verify scoring changes require approval.
 - Run load tests for v1 target capacity.
 - Verify cross-tenant data isolation under load.
+- Verify cross-pipeline data isolation under load and verify cross-pipeline analytics require explicit filters and permissions.
 - Component test mapping editors, sandbox failures, outcome dashboards, saved views, cross-tenant errors, and large-table behavior.
 - Playwright smoke test CRM/outreach mapping setup and outcome dashboard inspection.
 
@@ -74,6 +76,7 @@ The system can ingest CRM and outreach outcomes, improve scoring from downstream
 
 - CRM and outreach outcome loops work end-to-end.
 - Multi-tenant dashboards show quality/cost/source metrics.
+- Multi-tenant and multi-pipeline dashboards show quality/cost/source metrics with saved views and explicit pipeline filters.
 - Provider quality, verification, and deliverability dashboards show tenant-level metrics.
 - Load tests meet v1 targets or document bottlenecks.
 - Enterprise frontend supports integration mapping, outcome inspection, saved views, large-table behavior, and tenant-safe dashboards.

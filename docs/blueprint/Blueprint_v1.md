@@ -4,6 +4,8 @@ Date: 2026-05-12
 
 Update note: on 2026-05-13, the blueprint was extended to support seed lead enrichment from bid/platform lead lists without replacing the original account-discovery use case.
 
+Update note: the build plan now requires multiple independent pipelines under each client workspace, with pipeline-scoped datasets, configuration, credentials, run histories, evidence, reviews, exports, and diagnostics. The detailed execution overlay lives in [`multi-pipeline-plan.md`](multi-pipeline-plan.md).
+
 Execution note: this file is the complete reference blueprint. The build-ready modular version lives in [`README.md`](README.md), with ordered phase files, progress percentages, statuses, exit criteria, and test plans.
 
 ## 1. Purpose
@@ -32,6 +34,14 @@ The platform must support two complementary lanes:
 | Seed lead enrichment | Imported rows with first name, optional last name, company name, source, and notes/project context | Normalize rows, resolve company/domain, rank profile candidates, enrich/verify email, summarize research, review | Verified outreach-ready and CRM-ready leads |
 
 The seed lead enrichment lane reuses the same source policy, evidence, scoring, review, export, audit, and feedback core. It adds import normalization, profile/domain candidate ranking, licensed contact enrichment, email verification, and outreach handoff. It must not weaken the existing discovery controls.
+
+## 1.2 Multi-Pipeline Requirement
+
+Each client workspace must support multiple completely independent pipelines. A pipeline is the operational boundary for datasets, active configuration, source/provider policy, credentials, run history, artifacts, embeddings, extraction results, review decisions, exports, costs, quotas, audit, and diagnostics.
+
+Client-level settings may provide defaults or templates, but pipeline-owned records must include both `client_id` and `pipeline_id`. Credentials are pipeline-scoped by default. A credential, source, provider, run, export, or vector retrieval operation cannot be reused across pipelines unless a later enterprise feature explicitly creates a governed cross-pipeline view or copy workflow.
+
+The detailed phase plan, credential lifecycle, UI requirements, and roadmap plug-in are defined in [`multi-pipeline-plan.md`](multi-pipeline-plan.md).
 
 ## 2. Core Architecture Summary
 

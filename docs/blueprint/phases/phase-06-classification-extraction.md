@@ -9,11 +9,11 @@
 
 ## Goal
 
-Convert raw artifacts and seed lead rows into classified pages, structured company/signal/contact candidates, ranked profile/domain matches, and verified enrichment records.
+Convert pipeline-scoped raw artifacts and seed lead rows into classified pages, structured company/signal/contact candidates, ranked profile/domain matches, and verified enrichment records.
 
 ## Usable Outcome
 
-Collected artifacts and imported seed rows become searchable, evidence-backed structured intelligence. Seed leads can be matched to likely professional profiles/domains, enriched through approved providers, and prepared for review without guessing private contact data.
+Collected artifacts and imported seed rows become searchable, evidence-backed structured intelligence inside the owning pipeline. Seed leads can be matched to likely professional profiles/domains, enriched through approved pipeline providers, and prepared for review without guessing private contact data.
 
 ## Deliverables
 
@@ -73,6 +73,8 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 - Evidence URL/text required for extracted claims.
 - Provider email results require provider provenance and verification status before scoring.
 - LLM ranking can choose among candidates but cannot create email, phone, or profile values.
+- Verify retrieval, extraction, enrichment, and verification filters include both `client_id` and `pipeline_id`.
+- Verify Pipeline A artifacts, chunks, provider results, and email verifications cannot be retrieved or scored inside Pipeline B.
 - Low-confidence extraction routes to review.
 - Component test evidence components, profile comparison, verification badges, provider errors, and manual follow-up routing.
 - Playwright smoke test candidate comparison and verification state inspection.
@@ -83,6 +85,7 @@ Collected artifacts and imported seed rows become searchable, evidence-backed st
 - Extraction produces structured candidates with evidence.
 - Seed lead rows produce company/domain candidates and ranked profile candidates with evidence.
 - Approved provider adapters produce contact enrichment and email verification records with lineage.
+- Extracted candidates, enrichment records, verification records, and retrieval results are isolated by `client_id` and `pipeline_id`.
 - Research summaries cite stored artifacts or provider-approved evidence.
 - Schema failures are retryable or visible.
 - Frontend extraction and enrichment views make evidence, confidence, provenance, and verification gates inspectable.

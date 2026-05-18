@@ -9,15 +9,15 @@
 
 ## Goal
 
-Support authorized authenticated sources with encrypted session state and human-in-loop recovery for MFA/CAPTCHA, including restricted sources used for discovery or seed lead enrichment.
+Support authorized pipeline-scoped authenticated sources with encrypted session state and human-in-loop recovery for MFA/CAPTCHA, including restricted sources used for discovery or seed lead enrichment.
 
 ## Usable Outcome
 
-An operator can configure an authenticated source, validate login, pause on auth challenge, refresh session, and resume collection or enrichment.
+An operator can configure an authenticated source for a selected pipeline, validate login, pause on auth challenge, refresh session, and resume collection or enrichment without exposing or reusing credentials across pipelines.
 
 ## Deliverables
 
-- Credential profile schema.
+- Pipeline-scoped credential profile schema.
 - Secret adapter.
 - Playwright storage-state login.
 - Auth session validation.
@@ -62,6 +62,7 @@ An operator can configure an authenticated source, validate login, pause on auth
 - Verify expired session pauses source and creates review task.
 - Verify refreshed session resumes original job.
 - Verify a credential approved for one operation scope cannot be reused for another scope.
+- Verify a credential or authenticated session approved for one pipeline cannot be reused by another pipeline.
 - Verify a worker restart preserves authenticated job state, storage-state metadata, policy decision, and HITL recovery task.
 - Verify browser jobs run under isolated timeout, CPU, memory, and concurrency budgets.
 - Component test auth states, secret redaction, permission gates, resume confirmation, and audit context.
@@ -70,6 +71,7 @@ An operator can configure an authenticated source, validate login, pause on auth
 ## Exit Criteria
 
 - Authenticated crawling works for approved test source.
+- Authenticated crawling uses only credentials and sessions owned by the selected pipeline.
 - CAPTCHA/MFA triggers HITL by default.
 - Session state is encrypted and revocable.
 - Authenticated browser jobs can be paused, resumed, cancelled, retried, or dead-lettered through the shared job state model.

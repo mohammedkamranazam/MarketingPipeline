@@ -6,10 +6,10 @@ This file summarizes stable contracts. Detailed implementation belongs in migrat
 
 | Phase | Tables |
 |---|---|
-| 01 | `clients`, `client_users`, `client_settings` |
-| 02 | `documents`, `document_pages`, `document_chunks`, `extracted_knowledge_items`, `lead_import_batches`, `seed_lead_rows`, first async `pipeline_runs`, `job_runs`, `event_outbox`, `event_inbox` |
-| 03 | `review_items`, active ICP config tables |
-| 04 | `source_connectors`, `source_credentials`, `url_candidates`, `policy_decisions`, provider connector config in `source_connectors` |
+| 01 | `clients`, `client_users`, `client_settings`, `pipelines`, `pipeline_settings`, `pipeline_config_versions` |
+| 02 | pipeline-scoped `documents`, `document_pages`, `document_chunks`, `extracted_knowledge_items`, `lead_import_batches`, `seed_lead_rows`, first async `pipeline_runs`, `job_runs`, `event_outbox`, `event_inbox` |
+| 03 | pipeline-scoped `review_items`, active ICP config tables |
+| 04 | pipeline-scoped `source_connectors`, `source_credentials`, `credential_profiles`, `credential_validation_runs`, `credential_rotation_events`, `url_candidates`, `policy_decisions`, provider connector config in `source_connectors` |
 | 05 | `crawl_jobs`, `crawl_artifacts`, search/profile artifacts in `crawl_artifacts` |
 | 06 | `page_classifications`, `company_candidates`, `account_signals`, `contact_candidates`, `profile_candidates`, `email_enrichment_results`, `email_verifications` |
 | 07 | `lead_candidates`, `export_batches`, `export_batch_items`, outreach export payloads in `export_batch_items` |
@@ -23,6 +23,7 @@ This file summarizes stable contracts. Detailed implementation belongs in migrat
 ```text
 /health
 /clients
+/clients/{client_id}/pipelines
 /documents
 /lead-imports
 /knowledge
@@ -45,6 +46,8 @@ This file summarizes stable contracts. Detailed implementation belongs in migrat
 /admin/runs
 ```
 
+Pipeline-owned API groups are mounted under `/clients/{client_id}/pipelines/{pipeline_id}/...` in implementation. The shorthand groups above remain contract group names, not permission to omit `pipeline_id` from pipeline-owned routes.
+
 ## Event Envelope
 
 ```json
@@ -53,6 +56,7 @@ This file summarizes stable contracts. Detailed implementation belongs in migrat
   "event_type": "artifact.collected",
   "event_version": "1.0",
   "client_id": "uuid",
+  "pipeline_id": "uuid",
   "run_id": "uuid",
   "job_id": "uuid",
   "correlation_id": "uuid",
@@ -73,6 +77,8 @@ Every long-running action returns or records a typed job/run contract before exe
   "job_id": "uuid",
   "run_id": "uuid",
   "client_id": "uuid",
+  "pipeline_id": "uuid",
+  "pipeline_config_version_id": "uuid",
   "queue": "crawl.public",
   "job_type": "crawl_fetch",
   "status": "queued",
@@ -112,6 +118,8 @@ failed
 ```
 
 State changes must be append-auditable. Worker leases must expire if the worker stops heartbeating. Retried jobs must preserve the original `job_id`, increment `attempt`, and retain the original idempotency key.
+
+Run and job records must be scoped by `client_id` and `pipeline_id`. A run must freeze the `pipeline_config_version_id` and credential/profile versions it used so later config or credential changes do not rewrite history.
 
 ## Core Events
 
@@ -166,12 +174,12 @@ auth.recovery
 ## Worker Queue Rules
 
 - API requests create run/job records and return IDs; long-running work does not run inside request handlers.
-- Workers acquire jobs by queue, priority, tenant budget, source budget, provider budget, and lease availability.
+- Workers acquire jobs by queue, priority, tenant budget, pipeline budget, source budget, provider budget, and lease availability.
 - Every queue has dead-letter handling, retry-class behavior, timeout settings, and dashboard metrics.
 - Every job is idempotent or explicitly marked as non-retryable with a policy reason.
 - Export, enrichment, verification, and outreach operations require idempotency keys and duplicate-result handling before calling external providers.
 - Browser jobs have separate concurrency budgets from HTTP crawl jobs.
-- Provider jobs respect per-provider rate limits, tenant quotas, and budget stop thresholds.
+- Provider jobs respect per-provider rate limits, tenant quotas, pipeline quotas, and budget stop thresholds.
 
 ## Event Reliability Rules
 
@@ -180,6 +188,7 @@ auth.recovery
 - Event payloads must reference typed contracts in `src/backend/core/contracts`.
 - Event schema changes must be versioned and covered by contract tests.
 - Events must include `client_id`, `run_id`, `job_id` when applicable, `correlation_id`, and `trace_id`.
+- Pipeline-owned events must include `pipeline_id`.
 
 ## Tool Adapter Operation Contract
 
@@ -190,7 +199,9 @@ Every external tool operation, including crawl, search, browser, enrichment, ver
 | `adapter_key` | Stable adapter identifier, such as `scrapy_public`, `playwright_auth`, or a provider key |
 | `operation_type` | `crawl`, `search`, `browser_render`, `contact_enrich`, `email_verify`, `llm_extract`, `crm_export`, or `outreach_export` |
 | `input_contract` / `output_contract` | Pydantic contract names for typed boundary validation |
+| `client_id` / `pipeline_id` | Required scope for policy, credential lookup, rate limits, audit, lineage, and retrieval filters |
 | `policy_decision_id` | Policy decision that allowed, blocked, or routed the operation |
+| `credential_profile_id` | Pipeline-scoped credential profile approved for this operation, when credentials are required |
 | `credential_scope` | Approved operation scope required for credentials or sessions |
 | `terms_reference` | Source/provider terms, license, or internal approval reference |
 | `rate_limit_key` | Provider/source/tenant key used for throttling |
@@ -200,6 +211,51 @@ Every external tool operation, including crawl, search, browser, enrichment, ver
 | `pii_classification` | Whether the operation can read, write, or expose PII |
 | `trace_span_name` | OpenTelemetry span name for correlation |
 | `audit_event_type` | Audit log event emitted for execution and result |
+
+## Credential Profile Contract
+
+Pipeline-scoped credential profiles store metadata and secret references only. Raw secrets must be resolved through the secret adapter at execution time and must never be returned to the frontend.
+
+Required credential metadata:
+
+```json
+{
+  "credential_profile_id": "uuid",
+  "client_id": "uuid",
+  "pipeline_id": "uuid",
+  "display_name": "string",
+  "adapter_key": "string",
+  "auth_strategy": "api_key",
+  "operation_scopes": ["search", "contact_enrich"],
+  "secret_ref": "vault/path/or/local-dev-reference",
+  "secret_version": "string",
+  "safe_fingerprint": "masked-string",
+  "status": "active",
+  "status_reason": "validated",
+  "expires_at": "timestamp",
+  "rotation_due_at": "timestamp",
+  "last_validated_at": "timestamp",
+  "next_validation_at": "timestamp",
+  "terms_reference": "string",
+  "pii_classification": "string"
+}
+```
+
+Credential statuses:
+
+```text
+draft
+active
+expiring_soon
+expired
+validation_failed
+insufficient_scope
+rotation_due
+revoked
+disabled
+```
+
+Run preflight checks must block operations that require missing, expired, revoked, disabled, validation-failed, or insufficient-scope credentials.
 
 ## Retry Classes
 

@@ -9,15 +9,16 @@
 
 ## Goal
 
-Turn uploaded client documents into parsed text, chunks, embeddings, and evidence-backed ICP suggestions, and turn uploaded seed lead sheets into normalized import rows.
+Turn uploaded pipeline documents into parsed text, chunks, embeddings, and evidence-backed ICP suggestions, and turn uploaded pipeline seed lead sheets into normalized import rows.
 
 ## Usable Outcome
 
-A user can upload a document for a client and view extracted domain knowledge suggestions with citations. A user can also upload a CSV/XLSX seed lead list from bid platforms, CRM, events, or campaigns and see row-level validation results.
+A user can upload a document for a selected pipeline and view extracted domain knowledge suggestions with citations. A user can also upload a CSV/XLSX seed lead list into that pipeline and see row-level validation results without exposing data from another pipeline under the same client.
 
 ## Deliverables
 
 - Document upload API.
+- Pipeline-scoped document and seed import APIs.
 - Object storage adapter.
 - PDF/DOCX/TXT/CSV/XLSX parsers.
 - Seed lead import schemas and tables.
@@ -69,10 +70,11 @@ A user can upload a document for a client and view extracted domain knowledge su
 - Use the AI lead enrichment case study fields as the first seed lead sheet fixture: first name, optional last name, company name, source, and notes/project context.
 - Verify original file storage and retrieval.
 - Verify parsed text is non-empty.
-- Verify chunks include `client_id`, `document_id`, page metadata.
+- Verify chunks include `client_id`, `pipeline_id`, `document_id`, page metadata.
 - Verify extracted suggestions require evidence text.
 - Verify malformed seed rows are retained with actionable row-level errors.
-- Verify seed rows are tenant-scoped and deduplicated by import batch, normalized person fields, company, and source context.
+- Verify seed rows are tenant-scoped, pipeline-scoped, and deduplicated by import batch, normalized person fields, company, and source context.
+- Verify two pipelines under one client can upload different documents and seed lead files without data, chunks, embeddings, suggestions, rows, run history, or evidence views bleeding across pipelines.
 - Verify ingestion workflows create `pipeline_runs`, `job_runs`, outbox events, and inbox deduplication records before async processing.
 - Verify a retried ingestion job preserves `job_id`, increments attempt count, and does not duplicate extracted records or review suggestions.
 - Component test upload, parser failure, row validation, row detail, filter URL state, and Evidence Rail states.
@@ -82,6 +84,7 @@ A user can upload a document for a client and view extracted domain knowledge su
 
 - Uploading a sample document creates document, pages, chunks, and suggestions.
 - Uploading a sample seed lead file creates an import batch and normalized seed lead rows.
+- Uploading into one pipeline does not make the document, chunks, suggestions, import rows, or run history visible in another pipeline under the same client.
 - Suggestions include confidence and citations.
 - Seed lead rows preserve original values, normalized values, source, and project context.
 - First async workflows use the shared job/run and outbox/inbox contracts from `04-data-api-events.md`.

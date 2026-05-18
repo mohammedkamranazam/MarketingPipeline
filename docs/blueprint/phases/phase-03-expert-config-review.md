@@ -9,15 +9,15 @@
 
 ## Goal
 
-Let a human approve, edit, or reject extracted ICP suggestions and enrichment guardrails before they drive discovery, profile matching, contact enrichment, or outreach.
+Let a human approve, edit, or reject pipeline-specific ICP suggestions and enrichment guardrails before they drive discovery, profile matching, contact enrichment, or outreach.
 
 ## Usable Outcome
 
-A client has an active, human-approved ICP configuration plus suppression, title, enrichment, and outreach guardrails that can be used by source planning and seed lead enrichment.
+A pipeline has an active, human-approved ICP configuration plus suppression, title, enrichment, and outreach guardrails that can be used by source planning and seed lead enrichment.
 
 ## Deliverables
 
-- Active ICP config tables.
+- Pipeline-scoped active ICP config tables.
 - Review queue.
 - Review APIs.
 - Minimal review UI.
@@ -34,7 +34,7 @@ A client has an active, human-approved ICP configuration plus suppression, title
 | P03-T02 Add review queue table | Planned | 0% | migration test |
 | P03-T03 Convert suggestions to review items | Planned | 0% | workflow test |
 | P03-T04 Add review decision API | Planned | 0% | approve/reject/edit API tests |
-| P03-T05 Apply approved config | Planned | 0% | active config rows created |
+| P03-T05 Apply approved config | Planned | 0% | active pipeline config version rows created |
 | P03-T06 Add config audit log | Planned | 0% | audit test |
 | P03-T07 Build minimal review UI | Planned | 0% | manual local review flow |
 | P03-T08 Add suppression list basics | Planned | 0% | suppression API test |
@@ -70,6 +70,7 @@ A client has an active, human-approved ICP configuration plus suppression, title
 - Edit a suggestion before approval.
 - Reject a noisy suggestion.
 - Verify only approved config becomes active.
+- Verify approved config is active only for the selected pipeline and does not change another pipeline under the same client.
 - Verify email enrichment, verification, and outreach export remain disabled until approved guardrails exist.
 - Verify audit entries include actor and timestamp.
 - Component test route guards, role-gated actions, diff viewer, Evidence Rail, and decision toolbar.
@@ -78,7 +79,8 @@ A client has an active, human-approved ICP configuration plus suppression, title
 ## Exit Criteria
 
 - A reviewer can approve an ICP config without code changes.
-- Active config can be retrieved by API.
+- Active config can be retrieved by API for a selected pipeline.
+- Config approvals, rejections, guardrails, and suppression rules are isolated by `client_id` and `pipeline_id`.
 - Rejected suggestions do not influence discovery.
 - Rejected or missing enrichment guardrails do not influence profile search, provider calls, or outreach export.
 - Frontend permission matrix is implemented and tested for phase routes and actions.
@@ -87,4 +89,4 @@ A client has an active, human-approved ICP configuration plus suppression, title
 
 ## Handoff To Phase 04
 
-Phase 04 can use active ICP and enrichment config to validate source, search, provider, verification, and outreach policy decisions.
+Phase 04 can use active pipeline ICP and enrichment config to validate source, search, provider, verification, and outreach policy decisions.

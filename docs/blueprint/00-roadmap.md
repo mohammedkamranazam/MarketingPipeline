@@ -19,8 +19,8 @@ Progress is approximate and should be updated manually as phase tasks are comple
 | Phase | Name | Status | Progress | Usable Outcome | Phase File |
 |---:|---|---|---:|---|---|
 | 00 | Project Foundation | Done | 100% | Runnable FastAPI health-check app | [phase-00-foundation.md](phases/phase-00-foundation.md) |
-| 01 | Data Foundation And Workspace API | Ready | 0% | Persistent client workspace API | [phase-01-data-workspace-api.md](phases/phase-01-data-workspace-api.md) |
-| 02 | Document And Seed Lead Ingestion | Planned | 0% | Upload documents and seed lead files, parse text/tables, create chunks/import rows | [phase-02-document-intelligence.md](phases/phase-02-document-intelligence.md) |
+| 01 | Data Foundation And Workspace API | Ready | 0% | Persistent client and independent pipeline workspace API | [phase-01-data-workspace-api.md](phases/phase-01-data-workspace-api.md) |
+| 02 | Document And Seed Lead Ingestion | Planned | 0% | Upload pipeline-scoped documents and seed lead files, parse text/tables, create chunks/import rows | [phase-02-document-intelligence.md](phases/phase-02-document-intelligence.md) |
 | 03 | Expert Config Review | Planned | 0% | Human-approved ICP, enrichment, suppression, and outreach guardrails | [phase-03-expert-config-review.md](phases/phase-03-expert-config-review.md) |
 | 04 | Source Registry And Policy | Planned | 0% | Configured source, search, enrichment, verification, and outreach policy routing | [phase-04-source-registry-policy.md](phases/phase-04-source-registry-policy.md) |
 | 05 | Public Crawl And Raw Artifacts | Planned | 0% | Public pages and permitted search/profile artifacts collected into artifact store | [phase-05-public-crawl-artifacts.md](phases/phase-05-public-crawl-artifacts.md) |
@@ -35,6 +35,7 @@ Progress is approximate and should be updated manually as phase tasks are comple
 
 | Use Case | Supported By | MVP Completion Gate |
 |---|---|---|
+| Multiple independent pipelines under one customer | Phases 01-09 | One client can run multiple isolated pipelines with separate settings, data, credentials, runs, diagnostics, and exports |
 | Account discovery from ICP and public signals | Phases 01-07 | Evidence-backed companies, signals, contacts, review, and CRM-ready export |
 | Seed lead enrichment from bid/platform lists | Phases 01-07 | Imported first-name/company rows resolved to profile/domain candidates, enriched with verified provider email, reviewed, and exported for outreach |
 | Authenticated or restricted source expansion | Phases 08-09 | Approved authenticated sources with HITL recovery and audit controls |
@@ -44,11 +45,11 @@ Progress is approximate and should be updated manually as phase tasks are comple
 
 | Release | Required Phases | Exit Meaning |
 |---|---|---|
-| Developer Alpha | 00-01 | App and persistent workspace API work locally |
-| Ingestion MVP | 00-03 | Client docs can become approved ICP config and seed lead files can be normalized for review |
-| Discovery MVP | 00-05 | Safe public/search sources can be configured and collected |
-| Lead MVP | 00-07 | Evidence-backed discovery exports and verified seed-lead enrichment exports are usable |
-| Production v1 | 00-09 | Secure, observable, authenticated-source-capable system |
+| Developer Alpha | 00-01 | App and persistent workspace API work locally with multiple independent pipelines per client |
+| Ingestion MVP | 00-03 | Pipeline-scoped client docs can become approved ICP config and seed lead files can be normalized for review |
+| Discovery MVP | 00-05 | Safe public/search sources can be configured and collected per pipeline |
+| Lead MVP | 00-07 | Evidence-backed discovery exports and verified seed-lead enrichment exports are usable per pipeline |
+| Production v1 | 00-09 | Secure, observable, authenticated-source-capable system with pipeline-level runs, audit, metrics, and credential health |
 | Intelligence v2 | 00-10 | ROI-aware intelligence layer is usable |
 | Enterprise v3 | 00-11 | Scaled CRM/outreach integrations and outcome learning are usable |
 
@@ -58,6 +59,7 @@ The following gates apply across phases and should be treated as enterprise-grad
 
 - Phase 02 introduces shared run/job records, idempotency keys, worker leases, heartbeats, retry classes, and transactional outbox/inbox records before async workflows expand.
 - Phase 04 introduces the external tool adapter contract so crawl, search, browser, enrichment, verification, LLM, CRM, and outreach providers are certified through typed mocks before live use.
+- Phase 04 also introduces pipeline-scoped credential profiles, secret references, validation runs, expiry/rotation status, and config-area health checks before live provider calls are enabled.
 - Phase 05 enforces crawl/browser/provider concurrency budgets and keeps managed crawl or browser services behind optional adapters.
 - Phase 08 proves authenticated browser workflows can pause, resume, recover after worker restart, and preserve human-in-loop state.
 - Phase 09 verifies trace storage, worker operations dashboards, container supply-chain gates, and the Prefect vs Temporal durability decision before Production v1.
@@ -67,14 +69,16 @@ The following gates apply across phases and should be treated as enterprise-grad
 - Execute phases in order.
 - A later phase can be designed early but should not be implemented until previous phase tests pass.
 - Phase outputs must be usable without waiting for future phases.
+- Phase outputs must satisfy the diagnostic and UI evidence gates in [testable_blueprint.md](testable_blueprint.md).
+- Pipeline-owned records must follow [multi-pipeline-plan.md](multi-pipeline-plan.md): every dataset, run, credential, source, artifact, extraction, review, and export is scoped by `client_id` and `pipeline_id`.
 - If a phase grows too large, split it into sub-phases and update this roadmap.
 
 ## Immediate Next Steps
 
 1. Start [Phase 01](phases/phase-01-data-workspace-api.md).
 2. Implement Alembic and SQLAlchemy setup.
-3. Add `clients`, `client_users`, and `client_settings` with room for discovery and seed-enrichment preferences.
-4. Add `/clients` API tests.
-5. Scaffold the Phase 01 React/daisyUI app shell and client workspace pages once `/clients` contracts are stable.
-6. Add the Phase 01 frontend unit/component tests, MSW fixtures, and Playwright smoke test.
+3. Add `clients`, `client_users`, `client_settings`, `pipelines`, `pipeline_settings`, and `pipeline_config_versions`.
+4. Add `/clients` and `/clients/{client_id}/pipelines` API tests, including two-pipeline isolation under one client.
+5. Scaffold the Phase 01 React/daisyUI app shell, client workspace pages, pipeline list/detail/settings pages, and pipeline switcher once contracts are stable.
+6. Add the Phase 01 frontend unit/component tests, MSW fixtures, and Playwright smoke test for client and pipeline CRUD.
 7. Update this roadmap when Phase 01 progress changes.

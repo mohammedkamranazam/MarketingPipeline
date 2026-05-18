@@ -15,10 +15,27 @@ Seed lead enrichment follows the same rule. Imported rows with only a first name
 | Account discovery | Client docs, expert ICP, source policy | Evidence store, extraction, resolution, scoring, review | CRM-ready lead export |
 | Seed lead enrichment | CSV/XLSX lead rows from bid platforms, CRM, events, or campaign sheets | Policy, profile/domain evidence, provider enrichment, verification, review | Outreach-ready and CRM-ready lead export |
 
+## Customer And Pipeline Scope
+
+A client workspace may contain many independent pipelines. A pipeline is the operational boundary for datasets, active configuration, sources, providers, credentials, runs, artifacts, embeddings, review decisions, exports, costs, quotas, and diagnostics.
+
+Client-level records are limited to users, access, billing/compliance shell, and optional default templates. Pipeline-owned records must include both `client_id` and `pipeline_id`. A pipeline may be cloned from another pipeline, but the clone gets separate config versions, credential profiles, schedules, runs, and history.
+
+```text
+client workspace
+  -> users and client defaults
+  -> pipeline A
+       -> data, config, credentials, runs, evidence, exports
+  -> pipeline B
+       -> data, config, credentials, runs, evidence, exports
+```
+
+No retrieval, source operation, provider call, review queue, or export may mix pipeline data unless a later enterprise feature explicitly creates a governed cross-pipeline view.
+
 ## High-Level Flow
 
 ```text
-client docs + expert config        seed lead imports
+pipeline docs + expert config      pipeline seed lead imports
   -> seed knowledge                  -> row normalization
   -> discovery plan                  -> profile/domain search plan
              \                      /
@@ -79,12 +96,14 @@ LangGraph should be used for AI graph state, planning, and human-in-loop agent f
 Every crawl, search, browser, enrichment, verification, LLM, or outreach adapter must declare:
 
 - `adapter_key`, operation type, supported source/provider categories, and typed input/output contract names.
-- Source terms reference, credential operation scope, PII classification, and whether human approval is required.
+- Pipeline scope, source terms reference, credential operation scope, PII classification, and whether human approval is required.
 - Timeout, retry class, rate-limit key, concurrency budget, cost estimate, and quota metadata.
 - Policy decision ID, trace span name, audit event type, and redaction behavior.
 - Deterministic mock implementation and contract tests before live provider calls are enabled.
 
 Default adapters should cover local fixtures and mocked providers first. Managed providers such as Firecrawl, Browserbase, licensed data APIs, email verifiers, CRM systems, and outreach platforms are enabled only through the same adapter contract and feature-flag rules.
+
+Credential profiles are pipeline-scoped. Adapters receive only short-lived resolved secrets from the secret adapter at execution time and must never store or log raw secret values.
 
 ## Job Durability Principles
 
@@ -109,6 +128,8 @@ Production release gates must include image vulnerability scanning, SBOM/provena
 - Provider, search, verification, and outreach operations are logged with source terms, credentials, cost, and rate-limit metadata.
 - Every stage preserves lineage.
 - Every tenant-owned record is scoped by `client_id`.
+- Every pipeline-owned record is scoped by `client_id` and `pipeline_id`.
+- Credential health, expiry, validation, rotation, and revoked/disabled status are visible in the pipeline configuration area before runs start.
 
 ## Authenticated Source Rule
 

@@ -9,11 +9,11 @@
 
 ## Goal
 
-Add next-generation intelligence: hypotheses, ROI-aware planning, temporal signals, authenticity, skeptic pass, counterfactuals, attention prioritization, and campaign-aware enrichment strategy.
+Add pipeline-specific next-generation intelligence: hypotheses, ROI-aware planning, temporal signals, authenticity, skeptic pass, counterfactuals, attention prioritization, and campaign-aware enrichment strategy.
 
 ## Usable Outcome
 
-The system can prioritize discovery, seed lead enrichment, and review by expected business value while improving lead trust and deliverability.
+The system can prioritize discovery, seed lead enrichment, and review by expected business value while improving lead trust and deliverability inside each pipeline.
 
 ## Deliverables
 
@@ -62,6 +62,7 @@ The system can prioritize discovery, seed lead enrichment, and review by expecte
 - Verify all v2 features are behind flags.
 - Verify budget caps pause low-value work.
 - Verify provider calls are prioritized by expected value per verified lead.
+- Verify v2 ranking, dataset selection, and attention queues do not mix data across pipelines unless an explicit enterprise cross-pipeline analysis is enabled.
 - Verify skeptic pass does not block without evidence.
 - Component test feature-flag disabled/enabled states, attention sorting, score explanations, and strategy preview.
 - Playwright smoke test attention queue sorting behind an enabled flag.
@@ -71,6 +72,7 @@ The system can prioritize discovery, seed lead enrichment, and review by expecte
 - v2 intelligence can run in staging behind flags.
 - Lead review queue can sort by expected impact.
 - Cost-aware planning is auditable.
+- Cost-aware planning is auditable by `client_id` and `pipeline_id`.
 - Campaign-aware enrichment can run behind feature flags.
 - Frontend intelligence views are feature-flagged, permission-aware, and explain score/strategy decisions.
 - Tests and lint pass.
