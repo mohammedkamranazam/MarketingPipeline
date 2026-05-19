@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     enable_captcha_solver: bool = Field(default=False, alias="ENABLE_CAPTCHA_SOLVER")
     enable_auto_export: bool = Field(default=False, alias="ENABLE_AUTO_EXPORT")
 
+    cors_origins: list[str] = Field(
+        default=["http://localhost:5173", "http://localhost:3000"],
+        alias="CORS_ORIGINS",
+    )
+
     @property
     def enable_docs(self) -> bool:
         return self.app_env != "prod"

@@ -6,11 +6,11 @@ This is the master execution tracker. Update this file after every meaningful im
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 01: Data Foundation And Workspace API |
-| Last completed phase | Phase 00: Project Foundation |
-| Overall progress | 8% |
-| MVP progress | 11% |
-| Next ticket | `P01-T01` |
+| Current phase | Phase 06: Classification, Extraction, And Enrichment |
+| Last completed phase | Phase 05: Public Crawl And Raw Artifacts |
+| Overall progress | 45% |
+| MVP progress | 71% |
+| Next ticket | `P06-T01` |
 
 Progress is approximate and should be updated manually as phase tasks are completed.
 
@@ -19,12 +19,12 @@ Progress is approximate and should be updated manually as phase tasks are comple
 | Phase | Name | Status | Progress | Usable Outcome | Phase File |
 |---:|---|---|---:|---|---|
 | 00 | Project Foundation | Done | 100% | Runnable FastAPI health-check app | [phase-00-foundation.md](phases/phase-00-foundation.md) |
-| 01 | Data Foundation And Workspace API | Ready | 0% | Persistent client and independent pipeline workspace API | [phase-01-data-workspace-api.md](phases/phase-01-data-workspace-api.md) |
-| 02 | Document And Seed Lead Ingestion | Planned | 0% | Upload pipeline-scoped documents and seed lead files, parse text/tables, create chunks/import rows | [phase-02-document-intelligence.md](phases/phase-02-document-intelligence.md) |
-| 03 | Expert Config Review | Planned | 0% | Human-approved ICP, enrichment, suppression, and outreach guardrails | [phase-03-expert-config-review.md](phases/phase-03-expert-config-review.md) |
-| 04 | Source Registry And Policy | Planned | 0% | Configured source, search, enrichment, verification, and outreach policy routing | [phase-04-source-registry-policy.md](phases/phase-04-source-registry-policy.md) |
-| 05 | Public Crawl And Raw Artifacts | Planned | 0% | Public pages and permitted search/profile artifacts collected into artifact store | [phase-05-public-crawl-artifacts.md](phases/phase-05-public-crawl-artifacts.md) |
-| 06 | Classification, Extraction, And Enrichment | Planned | 0% | Artifacts and seed rows become structured companies/signals/contacts/profile matches | [phase-06-classification-extraction.md](phases/phase-06-classification-extraction.md) |
+| 01 | Data Foundation And Workspace API | Done | 100% | Persistent client and independent pipeline workspace API | [phase-01-data-workspace-api.md](phases/phase-01-data-workspace-api.md) |
+| 02 | Document And Seed Lead Ingestion | Done | 100% | Upload pipeline-scoped documents and seed lead files, parse text/tables, create chunks/import rows | [phase-02-document-intelligence.md](phases/phase-02-document-intelligence.md) |
+| 03 | Expert Config Review | Done | 100% | Human-approved ICP, enrichment, suppression, and outreach guardrails | [phase-03-expert-config-review.md](phases/phase-03-expert-config-review.md) |
+| 04 | Source Registry And Policy | Done | 100% | Configured source, search, enrichment, verification, and outreach policy routing | [phase-04-source-registry-policy.md](phases/phase-04-source-registry-policy.md) |
+| 05 | Public Crawl And Raw Artifacts | Done | 100% | Public pages and permitted search/profile artifacts collected into artifact store | [phase-05-public-crawl-artifacts.md](phases/phase-05-public-crawl-artifacts.md) |
+| 06 | Classification, Extraction, And Enrichment | In Progress | 0% | Artifacts and seed rows become structured companies/signals/contacts/profile matches | [phase-06-classification-extraction.md](phases/phase-06-classification-extraction.md) |
 | 07 | Lead Review And Export | Planned | 0% | Reviewed, scored, CRM/outreach-ready lead file | [phase-07-lead-review-export.md](phases/phase-07-lead-review-export.md) |
 | 08 | Authenticated Crawl And HITL | Planned | 0% | Server-safe authenticated source collection | [phase-08-authenticated-crawl-hitl.md](phases/phase-08-authenticated-crawl-hitl.md) |
 | 09 | Production Hardening | Planned | 0% | Observable, secure, release-ready v1 | [phase-09-production-hardening.md](phases/phase-09-production-hardening.md) |
@@ -75,10 +75,9 @@ The following gates apply across phases and should be treated as enterprise-grad
 
 ## Immediate Next Steps
 
-1. Start [Phase 01](phases/phase-01-data-workspace-api.md).
-2. Implement Alembic and SQLAlchemy setup.
-3. Add `clients`, `client_users`, `client_settings`, `pipelines`, `pipeline_settings`, and `pipeline_config_versions`.
-4. Add `/clients` and `/clients/{client_id}/pipelines` API tests, including two-pipeline isolation under one client.
-5. Scaffold the Phase 01 React/daisyUI app shell, client workspace pages, pipeline list/detail/settings pages, and pipeline switcher once contracts are stable.
-6. Add the Phase 01 frontend unit/component tests, MSW fixtures, and Playwright smoke test for client and pipeline CRUD.
-7. Update this roadmap when Phase 01 progress changes.
+1. Start [Phase 06](phases/phase-06-classification-extraction.md).
+2. Add classification/extraction/enrichment/verification ORM models and Alembic migration.
+3. Add rule classifier and LLM provider mock adapter.
+4. Add extraction schemas and workflow (companies, signals, contacts).
+5. Add seed lead resolver, profile candidate ranking, enrichment adapter, email verification.
+6. Add Phase 06 frontend: extraction views, profile comparison, enrichment monitor, evidence components.

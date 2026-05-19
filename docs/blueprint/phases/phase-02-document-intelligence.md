@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
-| Progress | 0% |
+| Status | Done |
+| Progress | 100% |
 | Depends On | Phase 01 |
 | Release | Ingestion MVP |
 

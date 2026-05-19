@@ -33,6 +33,12 @@ make -f devops/Makefile lint
 make -f devops/Makefile format
 ```
 
+## Running Project on DEV
+
+```bash
+./run-dev.sh --stop-docker   # also brings down Docker containers on Ctrl-C
+```
+
 ## Repository Layout
 
 ```text

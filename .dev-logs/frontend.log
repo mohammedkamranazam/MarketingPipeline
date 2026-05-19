@@ -1,0 +1,43 @@
+
+> mp-frontend@0.0.0 dev
+> vite
+
+2:29:14 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+Port 5173 is in use, trying another one...
+
+  VITE v8.0.13  ready in 209 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: use --host to expose
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/index.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/contracts/clients.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/contracts/index.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/contracts/ingestion.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/models/index.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/contracts/source.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/models/permissions.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/contracts/review.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/models/workspace.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/apiClient.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/clientService.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/index.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/reviewService.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/ingestionService.ts.html
+2:44:24 PM [vite] (client) page reload coverage/lcov-report/services/sourceService.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/index.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/index.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/clients.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/crawl.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/ingestion.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/review.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/contracts/source.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/models/index.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/models/permissions.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/models/workspace.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/index.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/apiClient.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/clientService.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/crawlService.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/ingestionService.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/reviewService.ts.html
+2:44:28 PM [vite] (client) page reload coverage/lcov-report/services/sourceService.ts.html

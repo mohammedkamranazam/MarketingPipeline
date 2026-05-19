@@ -8,6 +8,13 @@ dependencies = [
     "fastapi>=0.124.0",
     "pydantic-settings>=2.12.0",
     "uvicorn[standard]>=0.38.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "psycopg[binary]>=3.1.0",
+    "pypdf>=5.0.0",
+    "python-docx>=1.1.0",
+    "openpyxl>=3.1.0",
+    "python-multipart>=0.0.20",
 ]
 
 [dependency-groups]
@@ -24,6 +31,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]  # FastAPI Depends() in function signature is idiomatic
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
